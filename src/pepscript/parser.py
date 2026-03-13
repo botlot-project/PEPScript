@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import tomllib
+from typing import Any, cast
 
 from .config import ConfigNode
 from .exceptions import DuplicateMetadataBlockError, MetadataParseError
@@ -94,13 +95,13 @@ def _extract_toml_content(source: str, block: BlockInfo, *, path: Path | None = 
     return "".join(content_lines)
 
 
-def _parse_metadata_table(table: dict[str, object], *, path: Path | None = None) -> PEPMetadata:
+def _parse_metadata_table(table: dict[str, Any], *, path: Path | None = None) -> PEPMetadata:
     dependencies: list[str] = []
     if "dependencies" in table:
         value = table["dependencies"]
         if not isinstance(value, list):
             _raise_parse_error("'dependencies' must be a list", path=path)
-        for item in value:
+        for item in cast(list[Any], value):
             if not isinstance(item, str):
                 _raise_parse_error("'dependencies' entries must be strings", path=path)
             dependencies.append(item)
@@ -110,14 +111,14 @@ def _parse_metadata_table(table: dict[str, object], *, path: Path | None = None)
         value = table["requires-python"]
         if not isinstance(value, str):
             _raise_parse_error("'requires-python' must be a string", path=path)
-        requires_python = value
+        requires_python = cast(str, value)
 
     tool_node = ConfigNode()
     if "tool" in table:
         tool = table["tool"]
         if not isinstance(tool, dict):
             _raise_parse_error("'tool' must be a table/object", path=path)
-        tool_node = ConfigNode.from_dict(tool)
+        tool_node = ConfigNode.from_dict(cast(dict[str, Any], tool))
 
     return PEPMetadata(
         dependencies=dependencies,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import json
 import re
+from typing import Any, cast
 
 from .config import ConfigNode
 from .models import BlockInfo, PEPMetadata
@@ -19,7 +20,7 @@ def _format_key(key: str) -> str:
     return json.dumps(key)
 
 
-def _to_plain(value: object) -> object:
+def _to_plain(value: Any) -> Any:
     if isinstance(value, ConfigNode):
         return value.to_dict()
     if isinstance(value, list):
@@ -27,7 +28,7 @@ def _to_plain(value: object) -> object:
     return value
 
 
-def _format_value(value: object) -> str:
+def _format_value(value: Any) -> str:
     value = _to_plain(value)
     if isinstance(value, bool):
         return "true" if value else "false"
@@ -45,7 +46,7 @@ def _format_value(value: object) -> str:
     raise TypeError(f"Unsupported TOML value type: {type(value).__name__}")
 
 
-def _emit_table(path: list[str], mapping: Mapping[str, object], lines: list[str]) -> None:
+def _emit_table(path: list[str], mapping: Mapping[str, Any], lines: list[str]) -> None:
     header = ".".join(_format_key(part) for part in path)
     lines.append(f"[{header}]")
 
@@ -67,7 +68,7 @@ def _emit_table(path: list[str], mapping: Mapping[str, object], lines: list[str]
             lines.append("")
         child = _to_plain(mapping[key])
         if isinstance(child, Mapping):
-            _emit_table([*path, key], child, lines)
+            _emit_table([*path, key], cast(Mapping[str, Any], child), lines)
 
 
 def serialize_metadata_toml(meta: PEPMetadata) -> str:
@@ -83,7 +84,7 @@ def serialize_metadata_toml(meta: PEPMetadata) -> str:
     if isinstance(tool, Mapping) and tool:
         if lines:
             lines.append("")
-        _emit_table(["tool"], tool, lines)
+        _emit_table(["tool"], cast(Mapping[str, Any], tool), lines)
 
     if not lines:
         return ""
