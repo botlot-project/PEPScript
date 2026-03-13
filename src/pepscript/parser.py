@@ -9,6 +9,7 @@ import tomllib
 from .config import ConfigNode
 from .exceptions import DuplicateMetadataBlockError, MetadataParseError
 from .models import BlockInfo, PEPConfigRoot, PEPMetadata
+from .validate import validate_metadata
 
 
 @dataclass(slots=True)
@@ -148,6 +149,6 @@ def parse_source(source: str, *, strict: bool = True, path: Path | None = None) 
 
     meta = _parse_metadata_table(parsed, path=path)
     if strict:
-        # strict mode hook is implemented in validate.py and invoked by callers.
+        validate_metadata(meta, path=path)
         return ParseResult(meta=meta, block=block)
     return ParseResult(meta=meta, block=block)
