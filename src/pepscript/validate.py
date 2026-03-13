@@ -17,7 +17,7 @@ def _raise_validation_error(message: str, *, path: Path | None = None) -> None:
 
 
 def _is_scalar(value: object) -> bool:
-    return value is None or isinstance(value, (str, int, float, bool))
+    return isinstance(value, (str, int, float, bool))
 
 
 def _validate_tool_value(value: object, *, path: Path | None = None, location: str = "tool") -> None:
