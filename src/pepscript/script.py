@@ -23,7 +23,9 @@ class PEPScript:
     meta: PEPMetadata | None
     _block: BlockInfo | None
 
-    def __init__(self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True):
+    def __init__(
+        self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True
+    ):
         self.path = Path(path)
         self.encoding = encoding
         self.strict = strict
@@ -77,6 +79,7 @@ class PEPScript:
         self._parse_current_source()
 
     def to_source(self) -> str:
+        """Serialize current state to source text without writing to disk."""
         return rewrite_source(self.source, meta=self.meta, block=self._block)
 
     def save(self) -> None:
@@ -98,7 +101,9 @@ def parse_script(source: str, *, strict: bool = True) -> PEPScript:
     return PEPScript.from_source(source, strict=strict)
 
 
-def parse_file(path: str | Path, *, encoding: str = "utf-8", strict: bool = True) -> PEPScript:
+def parse_file(
+    path: str | Path, *, encoding: str = "utf-8", strict: bool = True
+) -> PEPScript:
     """Parse a file path into a PEPScript."""
 
     return PEPScript(path, encoding=encoding, strict=strict)

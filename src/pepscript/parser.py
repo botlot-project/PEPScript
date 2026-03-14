@@ -56,7 +56,9 @@ def _find_blocks(source: str, *, path: Path | None = None) -> list[BlockInfo]:
         while end_index < len(lines) and not _is_end_marker(lines[end_index]):
             end_index += 1
         if end_index >= len(lines):
-            _raise_parse_error("Metadata block start marker without end marker", path=path)
+            _raise_parse_error(
+                "Metadata block start marker without end marker", path=path
+            )
 
         block = BlockInfo(
             start=offsets[index],
@@ -71,7 +73,9 @@ def _find_blocks(source: str, *, path: Path | None = None) -> list[BlockInfo]:
     return blocks
 
 
-def _extract_toml_content(source: str, block: BlockInfo, *, path: Path | None = None) -> str:
+def _extract_toml_content(
+    source: str, block: BlockInfo, *, path: Path | None = None
+) -> str:
     raw = source[block.content_start : block.content_end]
     lines = raw.splitlines(keepends=True)
     content_lines: list[str] = []
@@ -95,7 +99,9 @@ def _extract_toml_content(source: str, block: BlockInfo, *, path: Path | None = 
     return "".join(content_lines)
 
 
-def _parse_metadata_table(table: dict[str, Any], *, path: Path | None = None) -> PEPMetadata:
+def _parse_metadata_table(
+    table: dict[str, Any], *, path: Path | None = None
+) -> PEPMetadata:
     dependencies: list[str] = []
     if "dependencies" in table:
         value = table["dependencies"]
@@ -127,14 +133,18 @@ def _parse_metadata_table(table: dict[str, Any], *, path: Path | None = None) ->
     )
 
 
-def parse_source(source: str, *, strict: bool = True, path: Path | None = None) -> ParseResult:
+def parse_source(
+    source: str, *, strict: bool = True, path: Path | None = None
+) -> ParseResult:
     """Parse PEP 723 metadata from source text."""
 
     blocks = _find_blocks(source, path=path)
     if len(blocks) > 1:
         if path is None:
             raise DuplicateMetadataBlockError("Multiple PEP 723 metadata blocks found")
-        raise DuplicateMetadataBlockError(f"Multiple PEP 723 metadata blocks found (path={path})")
+        raise DuplicateMetadataBlockError(
+            f"Multiple PEP 723 metadata blocks found (path={path})"
+        )
     if not blocks:
         return ParseResult(meta=None, block=None)
 
@@ -144,6 +154,7 @@ def parse_source(source: str, *, strict: bool = True, path: Path | None = None) 
         parsed = tomllib.loads(content)
     except tomllib.TOMLDecodeError as error:
         _raise_parse_error(f"Invalid metadata TOML: {error}", path=path)
+        raise  # unreachable; helps type checkers see parsed is bound
 
     if not isinstance(parsed, dict):
         _raise_parse_error("Metadata TOML must parse into a table", path=path)

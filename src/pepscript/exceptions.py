@@ -11,10 +11,6 @@ class FileLoadError(PepScriptError):
     """Raised when a script file cannot be read."""
 
 
-class MetadataBlockNotFoundError(PepScriptError):
-    """Raised when a metadata block is expected but missing."""
-
-
 class DuplicateMetadataBlockError(PepScriptError):
     """Raised when multiple PEP 723 metadata blocks are present."""
 

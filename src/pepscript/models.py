@@ -56,4 +56,3 @@ class PEPMetadata:
 
     def set_requires_python(self, spec: str | None) -> None:
         self.requires_python = spec
-

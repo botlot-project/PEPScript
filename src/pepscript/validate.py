@@ -20,7 +20,9 @@ def _is_scalar(value: object) -> bool:
     return isinstance(value, (str, int, float, bool))
 
 
-def _validate_tool_value(value: object, *, path: Path | None = None, location: str = "tool") -> None:
+def _validate_tool_value(
+    value: object, *, path: Path | None = None, location: str = "tool"
+) -> None:
     if isinstance(value, ConfigNode):
         _validate_tool_value(value.to_dict(), path=path, location=location)
         return
@@ -36,7 +38,9 @@ def _validate_tool_value(value: object, *, path: Path | None = None, location: s
         return
     if _is_scalar(value):
         return
-    _raise_validation_error(f"{location} contains unsupported value type: {type(value).__name__}", path=path)
+    _raise_validation_error(
+        f"{location} contains unsupported value type: {type(value).__name__}", path=path
+    )
 
 
 def validate_metadata(meta: PEPMetadata | None, *, path: Path | None = None) -> None:
@@ -55,6 +59,6 @@ def validate_metadata(meta: PEPMetadata | None, *, path: Path | None = None) -> 
             )
 
     if meta.requires_python is not None and not isinstance(meta.requires_python, str):
-        _raise_validation_error("'requires_python' must be a string or None", path=path)
+        _raise_validation_error("'requires-python' must be a string or None", path=path)
 
     _validate_tool_value(meta.config.tool, path=path)
