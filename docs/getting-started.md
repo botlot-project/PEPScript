@@ -8,15 +8,21 @@ PEPScript has **zero runtime dependencies** — the standard library is all you 
 
 ## Installation
 
-```bash
-pip install pepscript
-```
+=== "pip"
 
-Or with [uv](https://docs.astral.sh/uv/):
+    <div data-termynal>
+      <span data-ty="input">pip install pepscript</span>
+      <span data-ty="progress"></span>
+      <span data-ty>Successfully installed pepscript-0.1.0</span>
+    </div>
 
-```bash
-uv add pepscript
-```
+=== "uv"
+
+    <div data-termynal>
+      <span data-ty="input">uv add pepscript</span>
+      <span data-ty="progress"></span>
+      <span data-ty>Installed pepscript==0.1.0</span>
+    </div>
 
 ## First walkthrough: add a metadata block to a plain script
 
@@ -27,7 +33,7 @@ Start with a simple script that has no metadata:
 print("Hello, world!")
 ```
 
-Use PEPScript to add a metadata block and save it back:
+Use [`PEPScript`][pepscript.PEPScript] as a context manager to add a metadata block and save it back:
 
 ```python
 from pepscript import PEPScript
@@ -49,6 +55,9 @@ After running this, `hello.py` will look like:
 print("Hello, world!")
 ```
 
+!!! tip "Context manager = edit mode"
+    Inside a `with` block, [`save()`][pepscript.PEPScript.save] is called automatically on a clean exit. If an exception propagates out, all in-memory edits are discarded and the file is left untouched.
+
 ## Reading existing metadata
 
 ```python
@@ -60,7 +69,7 @@ with PEPScript("hello.py") as script:
         print(script.meta.dependencies)      # ["rich>=13.0"]
 ```
 
-`script.file` gives you typed file metadata (name, path, encoding, …):
+[`script.file`][pepscript.ScriptFileInfo] gives you typed file metadata (name, path, encoding, …):
 
 ```python
 print(script.file.name)      # "hello"
@@ -70,7 +79,7 @@ print(script.file.filename)  # "hello.py"
 ## Parsing from a string
 
 For cases where you have source code in memory rather than on disk, use
-`parse_script`:
+[`parse_script`][pepscript.parse_script]:
 
 ```python
 from pepscript import parse_script
@@ -87,8 +96,9 @@ script = parse_script(source)
 print(script.meta.dependencies)  # ["httpx"]
 ```
 
-An in-memory script has no associated file path. Calling `save()` on it will
-raise a `SaveError` — use `save_as(path)` to write it to disk first.
+!!! warning "In-memory scripts cannot be saved in place"
+    An in-memory script has no associated file path. Calling [`save()`][pepscript.PEPScript.save] on it will
+    raise [`SaveError`][pepscript.SaveError] — use [`save_as(path)`][pepscript.PEPScript.save_as] to write it to disk first.
 
 ## Next steps
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import tomllib
 from typing import Any, cast
 
-from .config import ConfigNode
+from .config import ToolConfig
 from .exceptions import DuplicateMetadataBlockError, MetadataParseError
 from .models import BlockInfo, PEPConfigRoot, PEPMetadata
 from .validate import validate_metadata
@@ -119,12 +119,12 @@ def _parse_metadata_table(
             _raise_parse_error("'requires-python' must be a string", path=path)
         requires_python = cast(str, value)
 
-    tool_node = ConfigNode()
+    tool_node = ToolConfig()
     if "tool" in table:
         tool = table["tool"]
         if not isinstance(tool, dict):
             _raise_parse_error("'tool' must be a table/object", path=path)
-        tool_node = ConfigNode.from_dict(cast(dict[str, Any], tool))
+        tool_node = ToolConfig.from_dict(cast(dict[str, Any], tool))
 
     return PEPMetadata(
         dependencies=dependencies,
@@ -157,7 +157,9 @@ def parse_source(
         raise  # pragma: no cover  # unreachable; helps type checkers see parsed is bound
 
     if not isinstance(parsed, dict):
-        _raise_parse_error("Metadata TOML must parse into a table", path=path)  # pragma: no cover
+        _raise_parse_error(
+            "Metadata TOML must parse into a table", path=path
+        )  # pragma: no cover
 
     meta = _parse_metadata_table(parsed, path=path)
     if strict:

@@ -1,6 +1,6 @@
 """Public API for PEPScript."""
 
-from .config import ConfigNode
+from .config import ToolConfig
 from .exceptions import (
     DuplicateMetadataBlockError,
     FileLoadError,
@@ -13,7 +13,7 @@ from .models import PEPConfigRoot, PEPMetadata, ScriptFileInfo
 from .script import PEPScript, parse_file, parse_script
 
 __all__ = [
-    "ConfigNode",
+    "ToolConfig",
     "DuplicateMetadataBlockError",
     "FileLoadError",
     "MetadataParseError",

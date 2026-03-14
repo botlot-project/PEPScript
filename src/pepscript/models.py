@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import ConfigNode
+from .config import ToolConfig
 
 
 @dataclass(slots=True)
@@ -35,7 +35,7 @@ class BlockInfo:
 class PEPConfigRoot:
     """Root container for metadata configuration."""
 
-    tool: ConfigNode = field(default_factory=ConfigNode)
+    tool: ToolConfig = field(default_factory=ToolConfig)
 
 
 @dataclass(slots=True)

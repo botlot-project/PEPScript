@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from pepscript import ConfigNode, PEPMetadata
+from pepscript import ToolConfig, PEPMetadata
 
 
 def test_config_node_attribute_and_item_access_roundtrip() -> None:
-    node = ConfigNode.from_dict(
+    node = ToolConfig.from_dict(
         {
             "botlot": {
                 "some_setting": "value",

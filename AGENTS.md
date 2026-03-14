@@ -39,7 +39,7 @@ uv run pytest             # Tests
 from pepscript import (
     PEPScript,        # Main context manager
     PEPMetadata,      # Typed metadata model
-    ConfigNode,       # Nested tool config access
+    ToolConfig,       # Nested tool config access
     parse_script,     # Parse from string
     parse_file,       # Parse from path
 )
@@ -52,7 +52,7 @@ src/pepscript/
 ├── script.py      # PEPScript class
 ├── parser.py      # Metadata block detection & TOML parsing
 ├── models.py      # Dataclass models (PEPMetadata, etc.)
-├── config.py      # ConfigNode for nested tool access
+├── config.py      # ToolConfig for nested tool access
 ├── serialize.py   # Write metadata back to source
 ├── validate.py    # PEP 508 dependency + PEP 440 specifier validation
 ├── exceptions.py  # Custom exception hierarchy
@@ -62,7 +62,7 @@ src/pepscript/
 ## Important Notes
 
 - **No raw file handles** — Expose `script.file` as typed `ScriptFileInfo`, not live descriptors
-- **Dynamic tool config** — Use `ConfigNode` wrapper for arbitrary `[tool.*]` sections (attribute + item access)
+- **Dynamic tool config** — Use `ToolConfig` wrapper for arbitrary `[tool.*]` sections (attribute + item access)
 - **Metadata block** — Regenerate deterministically on save; preserve non-metadata source exactly
 - **Validation** — PEP 508 dependency specifiers and PEP 440 `requires-python` validated via regex; no `packaging` dependency
 

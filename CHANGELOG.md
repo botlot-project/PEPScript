@@ -5,9 +5,9 @@
 Initial release.
 
 - Parse PEP 723 inline script metadata blocks from files or source strings
-- Typed dataclass models (`PEPMetadata`, `ConfigNode`, `ScriptFileInfo`)
+- Typed dataclass models (`PEPMetadata`, `ToolConfig`, `ScriptFileInfo`)
 - Add, remove, and modify dependencies and `requires-python`
-- Dynamic `[tool.*]` configuration access via `ConfigNode` (attribute and item access)
+- Dynamic `[tool.*]` configuration access via `ToolConfig` (attribute and item access)
 - Deterministic TOML serialization and metadata block rewriting
 - PEP 508 dependency specifier validation (name, extras, version operators, environment markers)
 - PEP 440 `requires-python` specifier validation

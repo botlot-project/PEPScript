@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pepscript import ConfigNode, PEPConfigRoot, PEPMetadata, parse_script
+from pepscript import ToolConfig, PEPConfigRoot, PEPMetadata, parse_script
 from pepscript.models import BlockInfo
 from pepscript.serialize import (
     _format_key,
@@ -33,7 +33,7 @@ def test_serialize_requires_python() -> None:
 
 
 def test_serialize_with_tool_config() -> None:
-    tool = ConfigNode.from_dict({"ruff": {"line-length": 120}})
+    tool = ToolConfig.from_dict({"ruff": {"line-length": 120}})
     meta = PEPMetadata(config=PEPConfigRoot(tool=tool))
     toml = serialize_metadata_toml(meta)
     assert "[tool.ruff]" in toml
@@ -41,7 +41,7 @@ def test_serialize_with_tool_config() -> None:
 
 
 def test_serialize_nested_tool_tables() -> None:
-    tool = ConfigNode.from_dict(
+    tool = ToolConfig.from_dict(
         {
             "ruff": {"lint": {"select": ["E", "F"]}},
             "mypy": {"strict": True},
@@ -136,14 +136,14 @@ print("hello")
 
 
 def test_serialize_false_boolean() -> None:
-    tool = ConfigNode.from_dict({"mypy": {"strict": False}})
+    tool = ToolConfig.from_dict({"mypy": {"strict": False}})
     meta = PEPMetadata(config=PEPConfigRoot(tool=tool))
     toml = serialize_metadata_toml(meta)
     assert "strict = false" in toml
 
 
 def test_serialize_float_value() -> None:
-    tool = ConfigNode.from_dict({"ruff": {"ratio": 1.5}})
+    tool = ToolConfig.from_dict({"ruff": {"ratio": 1.5}})
     meta = PEPMetadata(config=PEPConfigRoot(tool=tool))
     toml = serialize_metadata_toml(meta)
     assert "ratio = 1.5" in toml
@@ -155,7 +155,7 @@ def test_rewrite_source_no_meta_no_block_returns_source() -> None:
 
 
 def test_render_block_has_blank_separator_line() -> None:
-    tool = ConfigNode.from_dict({"ruff": {"strict": True}})
+    tool = ToolConfig.from_dict({"ruff": {"strict": True}})
     meta = PEPMetadata(dependencies=["httpx"], config=PEPConfigRoot(tool=tool))
     block = render_metadata_block(meta)
     assert "#\n" in block  # blank separator between deps and [tool.*]

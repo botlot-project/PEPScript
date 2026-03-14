@@ -9,17 +9,17 @@ from typing import Any, cast, overload
 
 
 def _wrap_value(value: Any) -> Any:
-    if isinstance(value, ConfigNode):
+    if isinstance(value, ToolConfig):
         return value
     if isinstance(value, Mapping):
-        return ConfigNode.from_dict(dict(value))
+        return ToolConfig.from_dict(dict(value))
     if isinstance(value, list):
         return [_wrap_value(item) for item in value]
     return value
 
 
 def _unwrap_value(value: Any) -> Any:
-    if isinstance(value, ConfigNode):
+    if isinstance(value, ToolConfig):
         return value.to_dict()
     if isinstance(value, list):
         return [_unwrap_value(item) for item in value]
@@ -27,7 +27,7 @@ def _unwrap_value(value: Any) -> Any:
 
 
 @dataclass(slots=True)
-class ConfigNode:
+class ToolConfig:
     """Mapping-like node with attribute and item access."""
 
     _data: dict[str, Any] = field(default_factory=dict, repr=False)
@@ -36,16 +36,16 @@ class ConfigNode:
         self._data = {key: _wrap_value(value) for key, value in self._data.items()}
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> ConfigNode:
-        """Create a ``ConfigNode`` from a plain mapping, wrapping nested dicts recursively.
+    def from_dict(cls, data: Mapping[str, Any]) -> ToolConfig:
+        """Create a ``ToolConfig`` from a plain mapping, wrapping nested dicts recursively.
 
         Args:
             data: A mapping whose values may themselves be mappings, lists, or
                 scalar values.
 
         Returns:
-            A new ``ConfigNode`` with all nested ``Mapping`` values converted to
-            ``ConfigNode`` instances.
+            A new ``ToolConfig`` with all nested ``Mapping`` values converted to
+            ``ToolConfig`` instances.
         """
         return cls(_data={key: _wrap_value(value) for key, value in data.items()})
 
@@ -53,7 +53,7 @@ class ConfigNode:
         """Recursively unwrap this node to a plain ``dict``.
 
         Returns:
-            A plain ``dict`` where all nested ``ConfigNode`` values are also
+            A plain ``dict`` where all nested ``ToolConfig`` values are also
             unwrapped to ``dict``.
         """
         return {key: _unwrap_value(value) for key, value in self._data.items()}
@@ -66,7 +66,7 @@ class ConfigNode:
             default: Value returned when *key* is not present. Defaults to ``None``.
 
         Returns:
-            The stored value (which may be a ``ConfigNode``) or *default*.
+            The stored value (which may be a ``ToolConfig``) or *default*.
         """
         return self._data.get(key, default)
 
@@ -74,7 +74,7 @@ class ConfigNode:
         """Return the value for *key*, inserting *default* if the key is absent.
 
         Mirrors ``dict.setdefault``. If *default* is a ``Mapping`` it is wrapped
-        in a ``ConfigNode`` before insertion.
+        in a ``ToolConfig`` before insertion.
 
         Args:
             key: The key to look up or insert.
@@ -106,7 +106,7 @@ class ConfigNode:
 
         Accepts a ``Mapping``, an iterable of ``(key, value)`` pairs, or keyword
         arguments (or any combination).  Any ``Mapping`` values are wrapped in
-        ``ConfigNode`` instances.
+        ``ToolConfig`` instances.
 
         Args:
             mapping: A ``Mapping`` or iterable of ``(key, value)`` pairs to merge.
@@ -122,7 +122,7 @@ class ConfigNode:
         for key, value in kwargs.items():
             self._data[key] = _wrap_value(value)
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> ConfigNode:
+    def __deepcopy__(self, memo: dict[int, Any]) -> ToolConfig:
         new = object.__new__(type(self))
         memo[id(self)] = new
         object.__setattr__(

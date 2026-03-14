@@ -2,8 +2,8 @@
 
 ## Reading metadata from a file
 
-Open a script with `PEPScript(path)`. After construction, `script.meta` is
-either a `PEPMetadata` instance (if a `# /// script` block exists) or `None`.
+Open a script with [`PEPScript(path)`][pepscript.PEPScript]. After construction, `script.meta` is
+either a [`PEPMetadata`][pepscript.PEPMetadata] instance (if a `# /// script` block exists) or `None`.
 
 ```python
 from pepscript import PEPScript
@@ -15,7 +15,7 @@ if script.meta:
     print(script.meta.dependencies)     # e.g. ["requests>=2.31"]
 ```
 
-`script.file` is a typed `ScriptFileInfo` dataclass — not a live file handle:
+`script.file` is a typed [`ScriptFileInfo`][pepscript.ScriptFileInfo] dataclass — not a live file handle:
 
 ```python
 print(script.file.path)      # PosixPath("my_script.py")
@@ -29,9 +29,9 @@ print(script.file.encoding)  # "utf-8"
 
 ### Context manager
 
-`PEPScript` is a context manager that provides automatic save/rollback semantics:
+[`PEPScript`][pepscript.PEPScript] is a context manager that provides automatic save/rollback semantics:
 
-- **Clean exit** — `save()` is called automatically (file-backed scripts only).
+- **Clean exit** — [`save()`][pepscript.PEPScript.save] is called automatically (file-backed scripts only).
 - **Exception** — all in-memory edits are discarded; the pre-enter state is restored.
 
 ```python
@@ -40,16 +40,17 @@ with PEPScript("my_script.py") as script:
 # save() called automatically on clean exit
 ```
 
-For in-memory scripts (`from_source`), auto-save is skipped on clean exit (no
-file path to write to), but rollback on exception still applies.
+!!! note
+    For in-memory scripts created with [`from_source()`][pepscript.PEPScript.from_source], auto-save is
+    skipped on clean exit (no file path to write to), but rollback on exception still applies.
 
-Only the metadata and block-offset state are snapshotted at entry — the full
-source text is not copied — so the context manager is efficient even for large files.
+Only `meta` and the internal block offsets are snapshotted at context manager entry — the full
+source text is not copied — so this is efficient even for large files.
 
 ### `ensure_meta`
 
 When a script has no `# /// script` block, `script.meta` is `None`. Use
-`ensure_meta()` to create an empty block:
+[`ensure_meta()`][pepscript.PEPScript.ensure_meta] to create an empty block:
 
 ```python
 meta = script.ensure_meta()  # returns existing or creates new PEPMetadata
@@ -57,11 +58,11 @@ meta = script.ensure_meta()  # returns existing or creates new PEPMetadata
 
 ### `save` and `save_as`
 
-`save()` writes to the original file path and calls `reload()` so the in-memory
-state reflects the saved file.
+[`save()`][pepscript.PEPScript.save] writes to the original file path and calls
+[`reload()`][pepscript.PEPScript.reload] so the in-memory state reflects the saved file.
 
-`save_as(path)` writes to an arbitrary path, updates `self.path`, and calls
-`reload()`:
+[`save_as(path)`][pepscript.PEPScript.save_as] writes to an arbitrary path, updates `self.path`, and calls
+[`reload()`][pepscript.PEPScript.reload]:
 
 ```python
 script.save_as("output/my_script.py")
@@ -79,12 +80,13 @@ meta.add_dependency("rich>=13.0")
 meta.remove_dependency("rich>=13.0")    # no-op if not found (exact match)
 ```
 
-Matching is **exact string comparison** — `"requests>=2.31"` and
-`"requests >= 2.31"` are treated as different entries.
+!!! warning "Exact string matching"
+    Matching is **exact string comparison** — `"requests>=2.31"` and
+    `"requests >= 2.31"` are treated as different entries.
 
 ## Parsing from a source string
 
-Use `parse_script` when you already have source code in memory:
+Use [`parse_script`][pepscript.parse_script] when you already have source code in memory:
 
 ```python
 from pepscript import parse_script
@@ -100,13 +102,13 @@ import httpx
 script = parse_script(source)
 ```
 
-An in-memory script has `script.path = None`. Calling `save()` raises
-`SaveError`. Use `save_as(path)` to write it to disk.
+An in-memory script has `script.path = None`. Calling [`save()`][pepscript.PEPScript.save] raises
+[`SaveError`][pepscript.SaveError]. Use [`save_as(path)`][pepscript.PEPScript.save_as] to write it to disk.
 
 ## Accessing tool configuration
 
 `[tool.*]` sections in the metadata TOML are exposed via `script.meta.config.tool`,
-which is a `ConfigNode`. It supports both **attribute access** (for Python-friendly
+which is a [`ToolConfig`][pepscript.ToolConfig]. It supports both **attribute access** (for Python-friendly
 keys) and **item access** (for hyphenated or otherwise non-identifier keys):
 
 ```python
@@ -119,12 +121,17 @@ keys) and **item access** (for hyphenated or otherwise non-identifier keys):
 node = script.meta.config.tool
 
 # Attribute access
-print(node.ruff.line_length)   # 88   (hyphens not valid in attribute names — use item access instead)
+print(node.ruff.line_length)   # 88
 
 # Item access (required for hyphenated keys)
 print(node["ruff"]["line-length"])  # 88
 print(node["my-tool"]["enabled"])   # True
 ```
+
+!!! tip
+    Prefer item access (`node["ruff"]["line-length"]`) over attribute access for keys that
+    contain hyphens — hyphens are not valid Python identifiers, so attribute access will
+    silently convert them to underscores.
 
 ## Modifying tool configuration
 
@@ -144,7 +151,7 @@ tool["ruff"].update({"select": ["E", "F"]})
 plain = tool.to_dict()
 ```
 
-`ConfigNode.setdefault` mirrors `dict.setdefault`:
+[`ToolConfig.setdefault`][pepscript.ToolConfig.setdefault] mirrors `dict.setdefault`:
 
 ```python
 tool.setdefault("ruff", {"line-length": 88})
@@ -152,14 +159,14 @@ tool.setdefault("ruff", {"line-length": 88})
 
 ## Validating metadata
 
-By default, `PEPScript(path)` validates metadata immediately after parsing
+By default, [`PEPScript(path)`][pepscript.PEPScript] validates metadata immediately after parsing
 (`strict=True`). Disable this for performance-sensitive or exploratory use:
 
 ```python
 script = PEPScript("my_script.py", strict=False)
 ```
 
-Run validation on demand with `script.validate()`:
+Run validation on demand with [`script.validate()`][pepscript.PEPScript.validate]:
 
 ```python
 from pepscript import MetadataValidationError
@@ -170,28 +177,29 @@ except MetadataValidationError as exc:
     print(exc)
 ```
 
-`validate()` is a no-op when `script.meta` is `None`. Validation covers:
+[`validate()`][pepscript.PEPScript.validate] is a no-op when `script.meta` is `None`. Validation covers:
 
 - **Structure** — correct types for all metadata fields
-- **PEP 508** — each dependency specifier is checked for a valid name, extras,
+- **[PEP 508](https://peps.python.org/pep-0508/)** — each dependency specifier is checked for a valid name, extras,
   version operators (e.g. `>=`, `~=`, `===`), and environment marker variables
-- **PEP 440** — `requires-python` must use valid version specifier syntax
+- **[PEP 440](https://peps.python.org/pep-0440/)** — `requires-python` must use valid version specifier syntax
 
-All checks are regex-based; no `packaging` dependency is required.
+!!! note
+    All checks are regex-based — no `packaging` dependency is required.
 
 ## Reloading from disk
 
-`reload()` discards all in-memory edits and re-reads the file from disk:
+[`reload()`][pepscript.PEPScript.reload] discards all in-memory edits and re-reads the file from disk:
 
 ```python
 script.reload()  # reverts to the saved state
 ```
 
-For in-memory scripts (`path=None`), `reload()` re-parses `self.source` in place.
+For in-memory scripts (`path=None`), [`reload()`][pepscript.PEPScript.reload] re-parses `self.source` in place.
 
 ## Serialization behaviour
 
-`to_source()` returns the fully serialized source text without writing to disk:
+[`to_source()`][pepscript.PEPScript.to_source] returns the fully serialized source text without writing to disk:
 
 ```python
 text = script.to_source()
@@ -203,18 +211,18 @@ Serialization guarantees:
 - The `# /// script` block is **fully regenerated** — keys are sorted,
   formatting is consistent (one space after `#`).
 - Everything **outside** the metadata block is preserved byte-for-byte.
-- If no block existed before `save()`, a new one is prepended.
+- If no block existed before [`save()`][pepscript.PEPScript.save], a new one is prepended.
 
 ## Exception handling
 
 | Exception | When raised |
 |---|---|
-| `PEPScriptError` | Base class — catch this to handle any PEPScript error |
-| `FileLoadError` | The script file cannot be read (wraps `OSError`) |
-| `DuplicateMetadataBlockError` | More than one `# /// script` block found |
-| `MetadataParseError` | The embedded TOML is malformed |
-| `MetadataValidationError` | Metadata fails structural validation |
-| `SaveError` | The file cannot be written, or `save()` called on an in-memory script |
+| [`PEPScriptError`][pepscript.PEPScriptError] | Base class — catch this to handle any PEPScript error |
+| [`FileLoadError`][pepscript.FileLoadError] | The script file cannot be read (wraps `OSError`) |
+| [`DuplicateMetadataBlockError`][pepscript.DuplicateMetadataBlockError] | More than one `# /// script` block found |
+| [`MetadataParseError`][pepscript.MetadataParseError] | The embedded TOML is malformed |
+| [`MetadataValidationError`][pepscript.MetadataValidationError] | Metadata fails structural validation |
+| [`SaveError`][pepscript.SaveError] | The file cannot be written, or `save()` called on an in-memory script |
 
 ```python
 from pepscript import (
@@ -236,3 +244,7 @@ except SaveError as exc:
 except PEPScriptError as exc:
     print(f"Unexpected PEPScript error: {exc}")
 ```
+
+!!! tip "Catch the base class for broad coverage"
+    All PEPScript exceptions inherit from [`PEPScriptError`][pepscript.PEPScriptError], so a single
+    `except PEPScriptError` will catch anything the library raises.

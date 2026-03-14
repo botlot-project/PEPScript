@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from pepscript import ConfigNode, PEPConfigRoot, PEPMetadata
+from pepscript import ToolConfig, PEPConfigRoot, PEPMetadata
 from pepscript.exceptions import MetadataValidationError
-from pepscript.validate import validate_metadata, _validate_pep508_dependency, _validate_requires_python
+from pepscript.validate import (
+    validate_metadata,
+    _validate_pep508_dependency,
+    _validate_requires_python,
+)
 
 
 def test_validate_rejects_non_string_dependencies() -> None:
@@ -22,7 +26,7 @@ def test_validate_rejects_non_string_requires_python() -> None:
 def test_validate_rejects_non_mapping_like_tool_values() -> None:
     meta = PEPMetadata(
         config=PEPConfigRoot(
-            tool=ConfigNode.from_dict(
+            tool=ToolConfig.from_dict(
                 {
                     "botlot": object(),
                 }
@@ -48,7 +52,7 @@ def test_validate_with_path_includes_path_in_error() -> None:
 def test_validate_nested_tool_list_with_bad_entry() -> None:
     meta = PEPMetadata(
         config=PEPConfigRoot(
-            tool=ConfigNode.from_dict({"ruff": {"select": [object()]}})
+            tool=ToolConfig.from_dict({"ruff": {"select": [object()]}})
         )
     )
     with pytest.raises(MetadataValidationError):
@@ -58,7 +62,7 @@ def test_validate_nested_tool_list_with_bad_entry() -> None:
 def test_validate_non_string_tool_key() -> None:
     meta = PEPMetadata(
         config=PEPConfigRoot(
-            tool=ConfigNode(_data={123: "value"})  # type: ignore[dict-item]
+            tool=ToolConfig(_data={123: "value"})  # type: ignore[dict-item]
         )
     )
     with pytest.raises(MetadataValidationError, match="keys must be strings"):
@@ -70,7 +74,7 @@ def test_validate_accepts_valid_metadata() -> None:
         dependencies=["httpx>=0.27"],
         requires_python=">=3.12",
         config=PEPConfigRoot(
-            tool=ConfigNode.from_dict(
+            tool=ToolConfig.from_dict(
                 {"ruff": {"line-length": 120, "enabled": True, "ratio": 0.5}}
             )
         ),
@@ -116,16 +120,16 @@ def test_pep508_valid(dep: str) -> None:
 @pytest.mark.parametrize(
     "dep",
     [
-        "",                             # empty string
-        "@invalid",                     # no name
-        "invalid-",                     # name ends with hyphen
-        "-invalid",                     # name starts with hyphen
-        "requests[unclosed>=1.0",       # unclosed extras bracket
-        "requests[inv@lid]",            # invalid extra name
-        "requests>>2.0",                # invalid version operator
-        "requests>=",                   # operator with no version
-        "requests; badvar >= '3'",      # unknown marker variable
-        "requests; python_vers >= '3'", # typo in marker variable
+        "",  # empty string
+        "@invalid",  # no name
+        "invalid-",  # name ends with hyphen
+        "-invalid",  # name starts with hyphen
+        "requests[unclosed>=1.0",  # unclosed extras bracket
+        "requests[inv@lid]",  # invalid extra name
+        "requests>>2.0",  # invalid version operator
+        "requests>=",  # operator with no version
+        "requests; badvar >= '3'",  # unknown marker variable
+        "requests; python_vers >= '3'",  # typo in marker variable
     ],
 )
 def test_pep508_invalid(dep: str) -> None:
@@ -168,10 +172,10 @@ def test_requires_python_valid(spec: str) -> None:
 @pytest.mark.parametrize(
     "spec",
     [
-        "3.12",         # no operator
-        ">>3.12",       # invalid operator
+        "3.12",  # no operator
+        ">>3.12",  # invalid operator
         ">=3.12,3.13",  # second clause missing operator
-        "",             # empty
+        "",  # empty
     ],
 )
 def test_requires_python_invalid(spec: str) -> None:
@@ -199,7 +203,7 @@ def test_validate_metadata_rejects_invalid_requires_python() -> None:
 def test_validate_tool_list_values() -> None:
     meta = PEPMetadata(
         config=PEPConfigRoot(
-            tool=ConfigNode.from_dict({"ruff": {"select": ["E", "F"]}})
+            tool=ToolConfig.from_dict({"ruff": {"select": ["E", "F"]}})
         )
     )
     validate_metadata(meta)  # should not raise

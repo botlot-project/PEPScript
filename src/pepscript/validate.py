@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 
-from .config import ConfigNode
+from .config import ToolConfig
 from .exceptions import MetadataValidationError
 from .models import PEPMetadata
 
@@ -61,7 +61,7 @@ def _is_scalar(value: object) -> bool:
 def _validate_tool_value(
     value: object, *, path: Path | None = None, location: str = "tool"
 ) -> None:
-    if isinstance(value, ConfigNode):
+    if isinstance(value, ToolConfig):
         _validate_tool_value(value.to_dict(), path=path, location=location)
         return
     if isinstance(value, Mapping):
@@ -127,9 +127,7 @@ def _validate_pep508_dependency(
 
     name = name_match.group()
     if not _NAME_RE.match(name):
-        _raise_validation_error(
-            f"{loc} has invalid package name {name!r}", path=path
-        )
+        _raise_validation_error(f"{loc} has invalid package name {name!r}", path=path)
 
     rest = name_scope[name_match.end() :].strip()
 
@@ -145,9 +143,7 @@ def _validate_pep508_dependency(
             if not e:
                 continue
             if not _NAME_RE.match(e):
-                _raise_validation_error(
-                    f"{loc} has invalid extra {e!r}", path=path
-                )
+                _raise_validation_error(f"{loc} has invalid extra {e!r}", path=path)
         rest = rest[close + 1 :].strip()
 
     # Version specifiers (not applicable for URL requirements)

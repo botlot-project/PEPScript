@@ -7,7 +7,7 @@ import json
 import re
 from typing import Any, cast
 
-from .config import ConfigNode
+from .config import ToolConfig
 from .models import BlockInfo, PEPMetadata
 
 _BARE_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -21,7 +21,7 @@ def _format_key(key: str) -> str:
 
 
 def _to_plain(value: Any) -> Any:
-    if isinstance(value, ConfigNode):
+    if isinstance(value, ToolConfig):
         return value.to_dict()
     if isinstance(value, list):
         return [_to_plain(item) for item in value]
