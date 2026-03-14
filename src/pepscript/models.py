@@ -32,19 +32,19 @@ class BlockInfo:
 
 
 @dataclass(slots=True)
-class PEPConfigRoot:
+class ConfigRoot:
     """Root container for metadata configuration."""
 
     tool: ToolConfig = field(default_factory=ToolConfig)
 
 
 @dataclass(slots=True)
-class PEPMetadata:
+class Metadata:
     """Typed metadata model for PEP 723 script metadata."""
 
     dependencies: list[str] = field(default_factory=list)
     requires_python: str | None = None
-    config: PEPConfigRoot = field(default_factory=PEPConfigRoot)
+    config: ConfigRoot = field(default_factory=ConfigRoot)
 
     def add_dependency(self, dep: str) -> None:
         """Add a dependency if it is not already present (exact string match).

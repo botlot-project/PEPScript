@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from .config import ToolConfig
 from .exceptions import DuplicateMetadataBlockError, MetadataParseError
-from .models import BlockInfo, PEPConfigRoot, PEPMetadata
+from .models import BlockInfo, ConfigRoot, Metadata
 from .validate import validate_metadata
 
 
@@ -17,7 +17,7 @@ from .validate import validate_metadata
 class ParseResult:
     """Parsed metadata and optional block offsets."""
 
-    meta: PEPMetadata | None
+    meta: Metadata | None
     block: BlockInfo | None
 
 
@@ -101,7 +101,7 @@ def _extract_toml_content(
 
 def _parse_metadata_table(
     table: dict[str, Any], *, path: Path | None = None
-) -> PEPMetadata:
+) -> Metadata:
     dependencies: list[str] = []
     if "dependencies" in table:
         value = table["dependencies"]
@@ -126,10 +126,10 @@ def _parse_metadata_table(
             _raise_parse_error("'tool' must be a table/object", path=path)
         tool_node = ToolConfig.from_dict(cast(dict[str, Any], tool))
 
-    return PEPMetadata(
+    return Metadata(
         dependencies=dependencies,
         requires_python=requires_python,
-        config=PEPConfigRoot(tool=tool_node),
+        config=ConfigRoot(tool=tool_node),
     )
 
 

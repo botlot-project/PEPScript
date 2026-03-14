@@ -9,7 +9,7 @@ from .exceptions import (
     PEPScriptError,
     SaveError,
 )
-from .models import PEPConfigRoot, PEPMetadata, ScriptFileInfo
+from .models import ConfigRoot, Metadata, ScriptFileInfo
 from .script import PEPScript, parse_file, parse_script
 
 __all__ = [
@@ -18,8 +18,8 @@ __all__ = [
     "FileLoadError",
     "MetadataParseError",
     "MetadataValidationError",
-    "PEPConfigRoot",
-    "PEPMetadata",
+    "ConfigRoot",
+    "Metadata",
     "PEPScript",
     "PEPScriptError",
     "SaveError",

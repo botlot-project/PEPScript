@@ -38,7 +38,7 @@ uv run pytest             # Tests
 ```python
 from pepscript import (
     PEPScript,        # Main context manager
-    PEPMetadata,      # Typed metadata model
+    Metadata,      # Typed metadata model
     ToolConfig,       # Nested tool config access
     parse_script,     # Parse from string
     parse_file,       # Parse from path
@@ -51,7 +51,7 @@ from pepscript import (
 src/pepscript/
 ├── script.py      # PEPScript class
 ├── parser.py      # Metadata block detection & TOML parsing
-├── models.py      # Dataclass models (PEPMetadata, etc.)
+├── models.py      # Dataclass models (Metadata, etc.)
 ├── config.py      # ToolConfig for nested tool access
 ├── serialize.py   # Write metadata back to source
 ├── validate.py    # PEP 508 dependency + PEP 440 specifier validation

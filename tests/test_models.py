@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pepscript import ToolConfig, PEPMetadata
+from pepscript import ToolConfig, Metadata
 
 
 def test_config_node_attribute_and_item_access_roundtrip() -> None:
@@ -24,7 +24,7 @@ def test_config_node_attribute_and_item_access_roundtrip() -> None:
 
 
 def test_metadata_dependency_helpers_are_idempotent() -> None:
-    meta = PEPMetadata()
+    meta = Metadata()
     meta.add_dependency("httpx>=0.27")
     meta.add_dependency("httpx>=0.27")
     meta.add_dependency("rich>=13.0")

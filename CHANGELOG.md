@@ -5,7 +5,7 @@
 Initial release.
 
 - Parse PEP 723 inline script metadata blocks from files or source strings
-- Typed dataclass models (`PEPMetadata`, `ToolConfig`, `ScriptFileInfo`)
+- Typed dataclass models (`Metadata`, `ToolConfig`, `ScriptFileInfo`)
 - Add, remove, and modify dependencies and `requires-python`
 - Dynamic `[tool.*]` configuration access via `ToolConfig` (attribute and item access)
 - Deterministic TOML serialization and metadata block rewriting

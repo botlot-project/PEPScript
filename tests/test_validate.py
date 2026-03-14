@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pepscript import ToolConfig, PEPConfigRoot, PEPMetadata
+from pepscript import ToolConfig, ConfigRoot, Metadata
 from pepscript.exceptions import MetadataValidationError
 from pepscript.validate import (
     validate_metadata,
@@ -12,20 +12,20 @@ from pepscript.validate import (
 
 
 def test_validate_rejects_non_string_dependencies() -> None:
-    meta = PEPMetadata(dependencies=["httpx>=0.27", 123])  # type: ignore[list-item]
+    meta = Metadata(dependencies=["httpx>=0.27", 123])  # type: ignore[list-item]
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
 
 
 def test_validate_rejects_non_string_requires_python() -> None:
-    meta = PEPMetadata(requires_python=123)  # type: ignore[arg-type]
+    meta = Metadata(requires_python=123)  # type: ignore[arg-type]
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
 
 
 def test_validate_rejects_non_mapping_like_tool_values() -> None:
-    meta = PEPMetadata(
-        config=PEPConfigRoot(
+    meta = Metadata(
+        config=ConfigRoot(
             tool=ToolConfig.from_dict(
                 {
                     "botlot": object(),
@@ -44,24 +44,22 @@ def test_validate_none_metadata_is_noop() -> None:
 def test_validate_with_path_includes_path_in_error() -> None:
     from pathlib import Path
 
-    meta = PEPMetadata(dependencies=["httpx", 123])  # type: ignore[list-item]
+    meta = Metadata(dependencies=["httpx", 123])  # type: ignore[list-item]
     with pytest.raises(MetadataValidationError, match="path="):
         validate_metadata(meta, path=Path("/tmp/test.py"))
 
 
 def test_validate_nested_tool_list_with_bad_entry() -> None:
-    meta = PEPMetadata(
-        config=PEPConfigRoot(
-            tool=ToolConfig.from_dict({"ruff": {"select": [object()]}})
-        )
+    meta = Metadata(
+        config=ConfigRoot(tool=ToolConfig.from_dict({"ruff": {"select": [object()]}}))
     )
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
 
 
 def test_validate_non_string_tool_key() -> None:
-    meta = PEPMetadata(
-        config=PEPConfigRoot(
+    meta = Metadata(
+        config=ConfigRoot(
             tool=ToolConfig(_data={123: "value"})  # type: ignore[dict-item]
         )
     )
@@ -70,10 +68,10 @@ def test_validate_non_string_tool_key() -> None:
 
 
 def test_validate_accepts_valid_metadata() -> None:
-    meta = PEPMetadata(
+    meta = Metadata(
         dependencies=["httpx>=0.27"],
         requires_python=">=3.12",
-        config=PEPConfigRoot(
+        config=ConfigRoot(
             tool=ToolConfig.from_dict(
                 {"ruff": {"line-length": 120, "enabled": True, "ratio": 0.5}}
             )
@@ -189,28 +187,26 @@ def test_requires_python_invalid(spec: str) -> None:
 
 
 def test_validate_metadata_rejects_invalid_dep_specifier() -> None:
-    meta = PEPMetadata(dependencies=["requests>>2.0"])
+    meta = Metadata(dependencies=["requests>>2.0"])
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
 
 
 def test_validate_metadata_rejects_invalid_requires_python() -> None:
-    meta = PEPMetadata(requires_python="3.12")  # missing operator
+    meta = Metadata(requires_python="3.12")  # missing operator
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
 
 
 def test_validate_tool_list_values() -> None:
-    meta = PEPMetadata(
-        config=PEPConfigRoot(
-            tool=ToolConfig.from_dict({"ruff": {"select": ["E", "F"]}})
-        )
+    meta = Metadata(
+        config=ConfigRoot(tool=ToolConfig.from_dict({"ruff": {"select": ["E", "F"]}}))
     )
     validate_metadata(meta)  # should not raise
 
 
 def test_validate_rejects_non_list_dependencies() -> None:
-    meta = PEPMetadata(dependencies="not-a-list")  # type: ignore[arg-type]
+    meta = Metadata(dependencies="not-a-list")  # type: ignore[arg-type]
     with pytest.raises(MetadataValidationError, match="'dependencies' must be a list"):
         validate_metadata(meta)
 

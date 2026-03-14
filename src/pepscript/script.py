@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .exceptions import SaveError
 from .io import build_file_info, read_source, write_source
-from .models import BlockInfo, PEPMetadata, ScriptFileInfo
+from .models import BlockInfo, Metadata, ScriptFileInfo
 from .parser import parse_source
 from .serialize import rewrite_source
 from .validate import validate_metadata
@@ -21,10 +21,10 @@ class PEPScript:
     strict: bool
     source: str
     file: ScriptFileInfo | None
-    meta: PEPMetadata
+    meta: Metadata
     has_metadata: bool
     _block: BlockInfo | None
-    _snapshot: tuple[PEPMetadata, BlockInfo | None, bool] | None
+    _snapshot: tuple[Metadata, BlockInfo | None, bool] | None
 
     def __init__(
         self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True
@@ -47,7 +47,7 @@ class PEPScript:
         self.strict = strict
         self.source = ""
         self.file = None
-        self.meta = PEPMetadata()
+        self.meta = Metadata()
         self.has_metadata = False
         self._block = None
         self._snapshot = None
@@ -63,7 +63,7 @@ class PEPScript:
         instance.strict = strict
         instance.source = source
         instance.file = None
-        instance.meta = PEPMetadata()
+        instance.meta = Metadata()
         instance.has_metadata = False
         instance._block = None
         instance._snapshot = None
@@ -103,7 +103,7 @@ class PEPScript:
     def _parse_current_source(self) -> None:
         parsed = parse_source(self.source, strict=self.strict, path=self.path)
         self.has_metadata = parsed.meta is not None
-        self.meta = parsed.meta if parsed.meta is not None else PEPMetadata()
+        self.meta = parsed.meta if parsed.meta is not None else Metadata()
         self._block = parsed.block
 
     def validate(self) -> None:

@@ -32,9 +32,9 @@ Typed, slot-based dataclasses that represent parsed PEP 723 metadata.
 See [Reading metadata](user-guide.md#reading-metadata-from-a-file) and
 [Tool configuration](user-guide.md#accessing-tool-configuration) in the User Guide.
 
-::: pepscript.PEPMetadata
+::: pepscript.Metadata
 
-::: pepscript.PEPConfigRoot
+::: pepscript.ConfigRoot
 
 ::: pepscript.ToolConfig
 

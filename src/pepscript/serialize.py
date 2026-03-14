@@ -8,7 +8,7 @@ import re
 from typing import Any, cast
 
 from .config import ToolConfig
-from .models import BlockInfo, PEPMetadata
+from .models import BlockInfo, Metadata
 
 _BARE_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _CODING_RE = re.compile(r"^[ \t]*#.*coding[:=][ \t]*[-_.a-zA-Z0-9]+")
@@ -71,7 +71,7 @@ def _emit_table(path: list[str], mapping: Mapping[str, Any], lines: list[str]) -
             _emit_table([*path, key], cast(Mapping[str, Any], child), lines)
 
 
-def serialize_metadata_toml(meta: PEPMetadata) -> str:
+def serialize_metadata_toml(meta: Metadata) -> str:
     """Serialize typed metadata into deterministic TOML."""
 
     lines: list[str] = []
@@ -91,7 +91,7 @@ def serialize_metadata_toml(meta: PEPMetadata) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_metadata_block(meta: PEPMetadata) -> str:
+def render_metadata_block(meta: Metadata) -> str:
     """Render a PEP 723 block from metadata."""
 
     toml = serialize_metadata_toml(meta)
@@ -122,7 +122,7 @@ def _insertion_offset(source: str) -> int:
 def rewrite_source(
     source: str,
     *,
-    meta: PEPMetadata | None,
+    meta: Metadata | None,
     block: BlockInfo | None,
 ) -> str:
     """Rewrite source with inserted/replaced/removed metadata block."""

@@ -3,7 +3,7 @@
 ## Reading metadata from a file
 
 Open a script with [`PEPScript(path)`][pepscript.PEPScript]. After construction, `script.meta` is
-always a [`PEPMetadata`][pepscript.PEPMetadata] instance. Use [`script.has_metadata`][pepscript.PEPScript.has_metadata]
+always a [`Metadata`][pepscript.Metadata] instance. Use [`script.has_metadata`][pepscript.PEPScript.has_metadata]
 to check whether a `# /// script` block was actually present in the file.
 
 ```python

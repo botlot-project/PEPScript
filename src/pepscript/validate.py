@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .config import ToolConfig
 from .exceptions import MetadataValidationError
-from .models import PEPMetadata
+from .models import Metadata
 
 # PEP 508 distribution name: starts/ends with alphanumeric, may contain ._- in between
 _NAME_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
@@ -166,7 +166,7 @@ def _validate_requires_python(spec: str, *, path: Path | None = None) -> None:
             )
 
 
-def validate_metadata(meta: PEPMetadata | None, *, path: Path | None = None) -> None:
+def validate_metadata(meta: Metadata | None, *, path: Path | None = None) -> None:
     """Validate metadata structure, PEP 508 dependency specifiers, and PEP 440 version constraints."""
 
     if meta is None:
