@@ -162,9 +162,14 @@ except MetadataValidationError as exc:
     print(exc)
 ```
 
-`validate()` is a no-op when `script.meta` is `None`. Validation is
-**structural only** — PEP 508 version specifiers are accepted as plain strings
-without further checking.
+`validate()` is a no-op when `script.meta` is `None`. Validation covers:
+
+- **Structure** — correct types for all metadata fields
+- **PEP 508** — each dependency specifier is checked for a valid name, extras,
+  version operators (e.g. `>=`, `~=`, `===`), and environment marker variables
+- **PEP 440** — `requires-python` must use valid version specifier syntax
+
+All checks are regex-based; no `packaging` dependency is required.
 
 ## Reloading from disk
 

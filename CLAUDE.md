@@ -29,7 +29,7 @@ src/pepscript/
 ├── models.py      # @dataclass(slots=True) models: PEPMetadata, BlockInfo, ScriptFileInfo
 ├── config.py      # ConfigNode — dynamic attribute+item access for [tool.*] sections
 ├── serialize.py   # Deterministic TOML serialization + block rewriting
-├── validate.py    # Structural metadata validation (no PEP 508 checks in v0.1)
+├── validate.py    # PEP 508 dependency + PEP 440 version specifier validation
 ├── exceptions.py  # Custom exception hierarchy rooted at PEPScriptError
 └── io.py          # File read/write, wraps OSError in custom exceptions
 ```
@@ -42,7 +42,7 @@ src/pepscript/
 - **`script.file`** is a typed `ScriptFileInfo` dataclass, not a live file handle.
 - **`script.meta`** can be `None` for scripts without a metadata block. Use `ensure_meta()` to create one.
 - **`ConfigNode`** wraps arbitrary `[tool.*]` dicts for both attribute access (`node.ruff.line_length`) and item access (`node["my-tool"]`).
-- Validation is structural only — no `packaging` dependency, so PEP 508 version specifiers are not validated.
+- Validation covers structure, PEP 508 dependency specifiers (name, extras, version operators, environment markers), and PEP 440 `requires-python` specifiers — all via regex, no `packaging` dependency.
 
 ### Public API
 

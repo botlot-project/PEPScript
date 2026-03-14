@@ -9,6 +9,8 @@ Initial release.
 - Add, remove, and modify dependencies and `requires-python`
 - Dynamic `[tool.*]` configuration access via `ConfigNode` (attribute and item access)
 - Deterministic TOML serialization and metadata block rewriting
+- PEP 508 dependency specifier validation (name, extras, version operators, environment markers)
+- PEP 440 `requires-python` specifier validation
 - Structural metadata validation (strict mode by default)
 - Context manager API with explicit `save()` / `save_as()` persistence
 - Zero runtime dependencies (stdlib only)

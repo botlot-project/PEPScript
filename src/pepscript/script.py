@@ -98,9 +98,12 @@ class PEPScript:
     def validate(self) -> None:
         """Run structural validation against the current metadata.
 
-        This is a no-op when ``script.meta`` is ``None``. Validation is structural
-        only — PEP 508 version specifiers are accepted as plain strings without
-        further parsing.
+        This is a no-op when ``script.meta`` is ``None``. Validates:
+
+        - Structural shape of the metadata (correct types for all fields)
+        - Each dependency is a valid PEP 508 specifier (name, extras, version
+          operators, environment markers)
+        - ``requires-python`` is a valid PEP 440 version specifier
 
         Raises:
             MetadataValidationError: If the metadata fails structural validation.

@@ -54,7 +54,7 @@ src/pepscript/
 ├── models.py      # Dataclass models (PEPMetadata, etc.)
 ├── config.py      # ConfigNode for nested tool access
 ├── serialize.py   # Write metadata back to source
-├── validate.py    # Structural validation
+├── validate.py    # PEP 508 dependency + PEP 440 specifier validation
 ├── exceptions.py  # Custom exception hierarchy
 └── io.py          # File operations
 ```
@@ -64,14 +64,14 @@ src/pepscript/
 - **No raw file handles** — Expose `script.file` as typed `ScriptFileInfo`, not live descriptors
 - **Dynamic tool config** — Use `ConfigNode` wrapper for arbitrary `[tool.*]` sections (attribute + item access)
 - **Metadata block** — Regenerate deterministically on save; preserve non-metadata source exactly
-- **Validation** — Structural only in v0.1.0 (no `packaging` dependency for PEP 508)
+- **Validation** — PEP 508 dependency specifiers and PEP 440 `requires-python` validated via regex; no `packaging` dependency
 
 ## Versioning
 
 - Semantic versioning (MAJOR.MINOR.PATCH)
-- Current target: `0.1.0` (API may evolve before 1.0.0)
+- Current target: `1.0.0`
 
 ## References
 
 - [PEP 723](https://peps.python.org/pep-0723/)
-- [Project Plan](./PLAN.md)
+

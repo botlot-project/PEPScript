@@ -1,4 +1,4 @@
-"""Structural validation for parsed metadata."""
+"""PEP 508 dependency and PEP 440 version specifier validation for parsed metadata."""
 
 from __future__ import annotations
 
@@ -171,7 +171,7 @@ def _validate_requires_python(spec: str, *, path: Path | None = None) -> None:
 
 
 def validate_metadata(meta: PEPMetadata | None, *, path: Path | None = None) -> None:
-    """Validate the structural shape of metadata."""
+    """Validate metadata structure, PEP 508 dependency specifiers, and PEP 440 version constraints."""
 
     if meta is None:
         return
