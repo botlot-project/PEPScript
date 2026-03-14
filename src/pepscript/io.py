@@ -13,7 +13,7 @@ def build_file_info(path: Path, *, encoding: str) -> ScriptFileInfo:
 
     return ScriptFileInfo(
         path=path,
-        name=path.name,
+        name=path.stem,
         filename=path.name,
         suffix=path.suffix,
         exists=path.exists(),
