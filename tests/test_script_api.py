@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pepscript import PEPScript
+from pepscript import PEPScript, parse_script
 from pepscript.exceptions import SaveError
 
 
@@ -239,3 +239,45 @@ def test_parse_file_convenience_function(tmp_path: Path) -> None:
     script = parse_file(path)
     assert script.has_metadata
     assert script.meta.dependencies == ["httpx"]
+
+
+def test_constructor_strict_false_skips_validation(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = [">>invalid"]\n# ///\n',
+        encoding="utf-8",
+    )
+    script = PEPScript(path, strict=False)
+    assert script.meta.dependencies == [">>invalid"]
+
+
+def test_save_failure_in_context_manager_clears_snapshot(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = ["httpx"]\n# ///\n', encoding="utf-8"
+    )
+
+    script = PEPScript(path)
+    path.unlink()
+    path.mkdir()  # make path a directory so save() fails
+
+    with pytest.raises(SaveError):
+        with script:
+            script.meta.add_dependency("rich")
+
+    assert script._snapshot is None
+
+
+def test_parse_script_convenience_function() -> None:
+    script = parse_script('# /// script\n# dependencies = ["httpx"]\n# ///\n')
+    assert script.has_metadata
+    assert script.meta.dependencies == ["httpx"]
+
+
+def test_file_info_name_is_stem(tmp_path: Path) -> None:
+    path = tmp_path / "my_script.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+    script = PEPScript(path)
+    assert script.file is not None
+    assert script.file.name == "my_script"
+    assert script.file.filename == "my_script.py"
