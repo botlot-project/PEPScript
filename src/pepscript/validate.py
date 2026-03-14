@@ -146,6 +146,12 @@ def _validate_pep508_dependency(
                 _raise_validation_error(f"{loc} has invalid extra {e!r}", path=path)
         rest = rest[close + 1 :].strip()
 
+    # For URL requirements, nothing should remain between name/extras and @
+    if is_url and rest:
+        _raise_validation_error(
+            f"{loc} has unexpected content before '@' in {dep!r}", path=path
+        )
+
     # Version specifiers (not applicable for URL requirements)
     if not is_url and rest:
         for clause in rest.split(","):
