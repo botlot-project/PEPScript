@@ -77,6 +77,38 @@ except MetadataValidationError as e:
     print(f"Invalid metadata: {e}")
 ```
 
+## Contributing
+
+### Setup
+
+```bash
+uv sync
+```
+
+### Running checks
+
+```bash
+uv run pytest              # Tests
+uv run ruff check .        # Lint
+uv run ruff format .       # Format
+uv run ty check .          # Type check
+```
+
+### Versioning and releases
+
+This project uses [Semantic Versioning](https://semver.org/). The version is set in `pyproject.toml`.
+
+To release:
+
+1. Update `version` in `pyproject.toml`
+2. Tag and push:
+   ```bash
+   git tag v0.2.0
+   git push --tags
+   ```
+
+Commit messages should follow [Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `feat!:` for breaking changes).
+
 ## License
 
 MIT
