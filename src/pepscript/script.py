@@ -92,12 +92,15 @@ class PEPScript:
         On exception, in-memory state is restored from the snapshot taken at
         ``__enter__`` and the exception is re-raised.
         """
-        if exc_type is None:
-            if self.path is not None:
-                self.save()
-        else:
-            self.meta, self._block, self.has_metadata = self._snapshot
-        self._snapshot = None
+        try:
+            if exc_type is None:
+                if self.path is not None:
+                    self.save()
+            else:
+                if self._snapshot is not None:
+                    self.meta, self._block, self.has_metadata = self._snapshot
+        finally:
+            self._snapshot = None
         return None
 
     def _parse_current_source(self) -> None:
