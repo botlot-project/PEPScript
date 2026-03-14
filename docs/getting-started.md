@@ -10,19 +10,15 @@ PEPScript has **zero runtime dependencies** — the standard library is all you 
 
 === "pip"
 
-    <div data-termynal>
-      <span data-ty="input">pip install pepscript</span>
-      <span data-ty="progress"></span>
-      <span data-ty>Successfully installed pepscript-0.1.0</span>
-    </div>
+    ```bash
+    pip install pepscript
+    ```
 
 === "uv"
 
-    <div data-termynal>
-      <span data-ty="input">uv add pepscript</span>
-      <span data-ty="progress"></span>
-      <span data-ty>Installed pepscript==0.1.0</span>
-    </div>
+    ```bash
+    uv add pepscript
+    ```
 
 ## First walkthrough: add a metadata block to a plain script
 
