@@ -1,5 +1,10 @@
 # PEPScript
 
+[![CI](https://github.com/botlot-project/PEPscript/actions/workflows/ci.yml/badge.svg)](https://github.com/botlot-project/PEPscript/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pepscript)](https://pypi.org/project/pepscript/)
+[![Python](https://img.shields.io/pypi/pyversions/pepscript)](https://pypi.org/project/pepscript/)
+[![License](https://img.shields.io/pypi/l/pepscript)](https://github.com/botlot-project/PEPscript/blob/main/LICENSE)
+
 A typed Python library for working with [PEP 723](https://peps.python.org/pep-0723/) inline script metadata. Parse, edit, validate, and serialize metadata blocks programmatically — without being a script runner.
 
 - Zero runtime dependencies (stdlib only)
