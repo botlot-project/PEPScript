@@ -29,14 +29,22 @@ print(script.file.encoding)  # "utf-8"
 
 ### Context manager
 
-`PEPScript` is a context manager. Note that **exiting the `with` block does not
-auto-save** — you must call `save()` explicitly:
+`PEPScript` is a context manager that provides automatic save/rollback semantics:
+
+- **Clean exit** — `save()` is called automatically (file-backed scripts only).
+- **Exception** — all in-memory edits are discarded; the pre-enter state is restored.
 
 ```python
 with PEPScript("my_script.py") as script:
     script.ensure_meta().add_dependency("rich>=13.0")
-    script.save()   # explicit save required
+# save() called automatically on clean exit
 ```
+
+For in-memory scripts (`from_source`), auto-save is skipped on clean exit (no
+file path to write to), but rollback on exception still applies.
+
+Only the metadata and block-offset state are snapshotted at entry — the full
+source text is not copied — so the context manager is efficient even for large files.
 
 ### `ensure_meta`
 

@@ -36,7 +36,7 @@ with PEPScript("hello.py") as script:
     meta = script.ensure_meta()          # creates an empty block if absent
     meta.add_dependency("rich>=13.0")
     meta.set_requires_python(">=3.12")
-    script.save()
+# save() is called automatically on clean exit
 ```
 
 After running this, `hello.py` will look like:

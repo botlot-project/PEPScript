@@ -28,7 +28,7 @@ uv run pytest             # Tests
 ## Key Design Patterns
 
 1. **Context Manager API** — `PEPScript` is the primary entry point
-2. **Explicit Persistence** — `save()` must be called explicitly; no auto-save on exit
+2. **Context Manager = Edit Mode** — auto-saves on clean exit (file-backed); rolls back in-memory edits on exception. Outside `with`, call `save()` explicitly.
 3. **Typed Dataclasses** — All core models use `@dataclass(slots=True)`
 4. **Strict by Default** — Invalid metadata fails early with clear errors
 5. **File-First, String-Capable** — Primary interface is file-based, but string parsing supported

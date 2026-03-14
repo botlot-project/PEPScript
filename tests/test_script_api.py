@@ -100,7 +100,7 @@ print("hello")
     assert script.meta.dependencies == ["rich>=13.0"]
 
 
-def test_context_manager_does_not_auto_save(tmp_path: Path) -> None:
+def test_context_manager_auto_saves_on_clean_exit(tmp_path: Path) -> None:
     path = tmp_path / "script.py"
     path.write_text(
         """# /// script
@@ -115,7 +115,53 @@ print("hello")
         script.ensure_meta().add_dependency("rich")
 
     saved = path.read_text(encoding="utf-8")
-    assert "rich" not in saved
+    assert "rich" in saved
+
+
+def test_context_manager_rolls_back_on_exception(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        """# /// script
+# dependencies = ["httpx"]
+# ///
+print("hello")
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError):
+        with PEPScript(path) as script:
+            script.ensure_meta().add_dependency("rich")
+            raise RuntimeError("something went wrong")
+
+    # disk is untouched
+    assert "rich" not in path.read_text(encoding="utf-8")
+    # in-memory state is also rolled back
+    assert "rich" not in script.meta.dependencies
+
+
+def test_context_manager_in_memory_no_save_on_clean_exit() -> None:
+    script = PEPScript.from_source(
+        "# /// script\n# dependencies = []\n# ///\nprint('hi')\n"
+    )
+    with script:
+        script.ensure_meta().add_dependency("rich")
+
+    # no path, so no save — but edits remain in memory
+    assert "rich" in script.meta.dependencies
+
+
+def test_context_manager_in_memory_rolls_back_on_exception() -> None:
+    script = PEPScript.from_source(
+        "# /// script\n# dependencies = []\n# ///\nprint('hi')\n"
+    )
+
+    with pytest.raises(ValueError):
+        with script:
+            script.ensure_meta().add_dependency("rich")
+            raise ValueError("oops")
+
+    assert "rich" not in script.meta.dependencies
 
 
 def test_save_in_memory_script_raises() -> None:

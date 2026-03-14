@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 from .exceptions import SaveError
@@ -22,6 +23,7 @@ class PEPScript:
     file: ScriptFileInfo | None
     meta: PEPMetadata | None
     _block: BlockInfo | None
+    _snapshot: tuple[PEPMetadata | None, BlockInfo | None] | None
 
     def __init__(
         self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True
@@ -46,6 +48,7 @@ class PEPScript:
         self.file = None
         self.meta = None
         self._block = None
+        self._snapshot = None
         self.reload()
 
     @classmethod
@@ -60,20 +63,37 @@ class PEPScript:
         instance.file = None
         instance.meta = None
         instance._block = None
+        instance._snapshot = None
         instance._parse_current_source()
         return instance
 
     def __enter__(self) -> PEPScript:
-        """Enter the context manager, returning ``self``.
+        """Enter edit mode, snapshotting current metadata for potential rollback.
 
-        Note:
-            The context manager does **not** auto-save on exit. Call ``save()``
-            explicitly before leaving the ``with`` block if you want to persist changes.
+        On a clean exit, changes are automatically persisted via ``save()``
+        (file-backed scripts only; in-memory scripts retain edits in-memory).
+        If an exception propagates out of the ``with`` block, all in-memory
+        edits are discarded by restoring the pre-enter snapshot.
+
+        Only ``meta`` and the internal block offsets are snapshotted — the full
+        source text is not copied — so this is efficient even for large files.
         """
+        self._snapshot = (copy.deepcopy(self.meta), self._block)
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        """Exit the context manager without any automatic persistence."""
+        """Exit edit mode, saving or rolling back depending on whether an exception occurred.
+
+        On clean exit, ``save()`` is called for file-backed scripts.
+        On exception, in-memory state is restored from the snapshot taken at
+        ``__enter__`` and the exception is re-raised.
+        """
+        if exc_type is None:
+            if self.path is not None:
+                self.save()
+        else:
+            self.meta, self._block = self._snapshot  # type: ignore[misc]
+        self._snapshot = None
         return None
 
     def _parse_current_source(self) -> None:

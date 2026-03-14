@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast, overload
@@ -120,6 +121,16 @@ class ConfigNode:
             self._data[key] = _wrap_value(value)
         for key, value in kwargs.items():
             self._data[key] = _wrap_value(value)
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> ConfigNode:
+        new = object.__new__(type(self))
+        memo[id(self)] = new
+        object.__setattr__(
+            new,
+            "_data",
+            {key: copy.deepcopy(value, memo) for key, value in self._data.items()},
+        )
+        return new
 
     def __getattr__(self, name: str) -> Any:
         try:

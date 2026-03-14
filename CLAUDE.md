@@ -36,7 +36,7 @@ src/pepscript/
 
 ### Key design rules
 
-- **Explicit persistence** — `save()` must be called; context manager exit does NOT auto-save.
+- **Context manager = edit mode** — auto-saves on clean exit (file-backed); rolls back in-memory edits on exception. Outside a `with` block, `save()` must be called explicitly.
 - **Strict by default** — `PEPScript(path)` validates on parse; disable with `strict=False`.
 - **Deterministic serialization** — The metadata block is fully regenerated on save (sorted keys, consistent formatting); non-metadata source is preserved exactly.
 - **`script.file`** is a typed `ScriptFileInfo` dataclass, not a live file handle.

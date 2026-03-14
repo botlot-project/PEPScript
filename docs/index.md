@@ -6,7 +6,7 @@
 
 - **Zero runtime dependencies** — stdlib only; no `packaging`, no `tomllib` backport needed.
 - **Strict by default** — metadata is validated immediately on parse; opt out with `strict=False`.
-- **Explicit persistence** — changes are never auto-saved. Call `save()` when you're ready.
+- **Safe context manager** — auto-saves on clean exit; rolls back all in-memory edits on exception. Call `save()` explicitly outside a `with` block.
 - **Deterministic serialization** — the metadata block is fully regenerated on save with sorted keys and consistent formatting; your source code is preserved exactly.
 - **Typed API** — all models are `@dataclass(slots=True)` with full type hints and a `py.typed` marker.
 - **Dynamic tool config access** — `ConfigNode` supports both attribute access (`node.ruff.line_length`) and item access (`node["my-tool"]`) for arbitrary `[tool.*]` sections.
@@ -20,7 +20,7 @@ with PEPScript("script.py") as script:
     meta = script.ensure_meta()
     meta.add_dependency("requests>=2.31")
     meta.set_requires_python(">=3.12")
-    script.save()
+# save() is called automatically; exceptions roll back all edits
 ```
 
 That's it — PEPScript handles creating the `# /// script` block if it doesn't exist,

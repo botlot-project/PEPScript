@@ -12,7 +12,7 @@ Initial release.
 - PEP 508 dependency specifier validation (name, extras, version operators, environment markers)
 - PEP 440 `requires-python` specifier validation
 - Structural metadata validation (strict mode by default)
-- Context manager API with explicit `save()` / `save_as()` persistence
+- Context manager API: auto-save on clean exit, rollback on exception; explicit `save()` / `save_as()` outside `with` blocks
 - Zero runtime dependencies (stdlib only)
 - Full type hints with `py.typed` marker
 - GitHub Actions CI (lint, format, type check, tests on Python 3.12 + 3.13)
