@@ -39,7 +39,7 @@ uv run pytest             # Tests
 from pepscript import (
     PEPScript,        # Main context manager
     PEPMetadata,      # Typed metadata model
-    ToolConfig,       # Nested tool config access
+    ConfigNode,       # Nested tool config access
     parse_script,     # Parse from string
     parse_file,       # Parse from path
 )
