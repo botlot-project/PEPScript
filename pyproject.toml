@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/maximiliancw/pepscript"
+Repository = "https://github.com/botlot-project/PEPscript"
 
 [dependency-groups]
 dev = [
