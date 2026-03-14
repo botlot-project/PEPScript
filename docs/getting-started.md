@@ -8,17 +8,13 @@ PEPScript has **zero runtime dependencies** — the standard library is all you 
 
 ## Installation
 
-=== "pip"
+```bash
+# pip
+pip install pepscript
 
-    ```bash
-    pip install pepscript
-    ```
-
-=== "uv"
-
-    ```bash
-    uv add pepscript
-    ```
+# uv
+uv add pepscript
+```
 
 ## First walkthrough: add a metadata block to a plain script
 
