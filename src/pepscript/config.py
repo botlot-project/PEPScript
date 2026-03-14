@@ -151,8 +151,17 @@ class ToolConfig:
     def __delitem__(self, key: str) -> None:
         del self._data[key]
 
+    def __contains__(self, key: object) -> bool:
+        return key in self._data
+
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
     def __len__(self) -> int:
         return len(self._data)
+
+    def __bool__(self) -> bool:
+        return bool(self._data)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.to_dict()!r})"
