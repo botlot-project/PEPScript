@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from pepscript import PEPScript
+from pepscript.exceptions import SaveError
 
 
 def test_save_replaces_block_and_preserves_non_metadata_code(tmp_path: Path) -> None:
@@ -95,3 +98,47 @@ print("hello")
 
     assert script.meta is not None
     assert script.meta.dependencies == ["rich>=13.0"]
+
+
+def test_context_manager_does_not_auto_save(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        """# /// script
+# dependencies = ["httpx"]
+# ///
+print("hello")
+""",
+        encoding="utf-8",
+    )
+
+    with PEPScript(path) as script:
+        script.ensure_meta().add_dependency("rich")
+
+    saved = path.read_text(encoding="utf-8")
+    assert "rich" not in saved
+
+
+def test_save_in_memory_script_raises() -> None:
+    script = PEPScript.from_source('print("hello")\n')
+    with pytest.raises(SaveError):
+        script.save()
+
+
+def test_from_source_without_metadata() -> None:
+    script = PEPScript.from_source('print("hello")\n')
+    assert script.meta is None
+    assert script.path is None
+    assert script.file is None
+
+
+def test_to_source_without_saving(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(path)
+    script.ensure_meta().add_dependency("httpx")
+    result = script.to_source()
+
+    assert "httpx" in result
+    # Original file unchanged
+    assert "httpx" not in path.read_text(encoding="utf-8")

@@ -131,6 +131,32 @@ print("hello")
     assert 'print("hello")' in new_source
 
 
+def test_serialize_false_boolean() -> None:
+    tool = ConfigNode.from_dict({"mypy": {"strict": False}})
+    meta = PEPMetadata(config=PEPConfigRoot(tool=tool))
+    toml = serialize_metadata_toml(meta)
+    assert "strict = false" in toml
+
+
+def test_serialize_float_value() -> None:
+    tool = ConfigNode.from_dict({"ruff": {"ratio": 1.5}})
+    meta = PEPMetadata(config=PEPConfigRoot(tool=tool))
+    toml = serialize_metadata_toml(meta)
+    assert "ratio = 1.5" in toml
+
+
+def test_rewrite_source_no_meta_no_block_returns_source() -> None:
+    source = 'print("hello")\n'
+    assert rewrite_source(source, meta=None, block=None) == source
+
+
+def test_render_block_has_blank_separator_line() -> None:
+    tool = ConfigNode.from_dict({"ruff": {"strict": True}})
+    meta = PEPMetadata(dependencies=["httpx"], config=PEPConfigRoot(tool=tool))
+    block = render_metadata_block(meta)
+    assert "#\n" in block  # blank separator between deps and [tool.*]
+
+
 def test_round_trip_empty_metadata() -> None:
     """Ensure a script with ensure_meta() but no data round-trips."""
     script = parse_script('print("hello")\n')

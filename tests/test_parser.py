@@ -50,3 +50,106 @@ print("hello")
 """
     with pytest.raises(DuplicateMetadataBlockError):
         parse_script(source)
+
+
+def test_parse_unclosed_block_raises() -> None:
+    source = """# /// script
+# dependencies = ["httpx"]
+print("hello")
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_blank_line_in_block_raises() -> None:
+    source = """# /// script
+# dependencies = ["httpx"]
+
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_non_comment_line_in_block_raises() -> None:
+    source = """# /// script
+dependencies = ["httpx"]
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_non_list_dependencies_raises() -> None:
+    source = """# /// script
+# dependencies = "not-a-list"
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_non_string_requires_python_raises() -> None:
+    source = """# /// script
+# requires-python = 312
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_non_table_tool_raises() -> None:
+    source = """# /// script
+# tool = "not-a-table"
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_non_string_dependency_entry_raises() -> None:
+    source = """# /// script
+# dependencies = [123]
+# ///
+"""
+    with pytest.raises(MetadataParseError):
+        parse_script(source)
+
+
+def test_parse_with_path_includes_path_in_error() -> None:
+    from pathlib import Path
+
+    from pepscript.parser import parse_source
+
+    source = """# /// script
+# dependencies = ["httpx"
+# ///
+"""
+    with pytest.raises(MetadataParseError, match="path="):
+        parse_source(source, path=Path("/tmp/test.py"))
+
+
+def test_duplicate_blocks_with_path_includes_path_in_error() -> None:
+    from pathlib import Path
+
+    from pepscript.parser import parse_source
+
+    source = """# /// script
+# dependencies = []
+# ///
+# /// script
+# dependencies = []
+# ///
+"""
+    with pytest.raises(DuplicateMetadataBlockError, match="path="):
+        parse_source(source, path=Path("/tmp/test.py"))
+
+
+def test_parse_strict_false_skips_validation() -> None:
+    source = """# /// script
+# dependencies = ["httpx"]
+# ///
+"""
+    script = parse_script(source, strict=False)
+    assert script.meta is not None
+    assert script.meta.dependencies == ["httpx"]
