@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import tomllib
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from .config import ToolConfig
 from .exceptions import DuplicateMetadataBlockError, MetadataParseError
@@ -29,7 +29,7 @@ def _is_end_marker(line: str) -> bool:
     return line.strip() == "# ///"
 
 
-def _raise_parse_error(message: str, *, path: Path | None = None) -> None:
+def _raise_parse_error(message: str, *, path: Path | None = None) -> NoReturn:
     if path is None:
         raise MetadataParseError(message)
     raise MetadataParseError(f"{message} (path={path})")
@@ -154,12 +154,6 @@ def parse_source(
         parsed = tomllib.loads(content)
     except tomllib.TOMLDecodeError as error:
         _raise_parse_error(f"Invalid metadata TOML: {error}", path=path)
-        raise  # pragma: no cover  # unreachable; helps type checkers see parsed is bound
-
-    if not isinstance(parsed, dict):
-        _raise_parse_error(
-            "Metadata TOML must parse into a table", path=path
-        )  # pragma: no cover
 
     meta = _parse_metadata_table(parsed, path=path)
     if strict:

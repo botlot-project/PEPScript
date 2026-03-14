@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from pathlib import Path
+from typing import NoReturn
 
 from .config import ToolConfig
 from .exceptions import MetadataValidationError
@@ -48,7 +49,7 @@ _MARKER_KEYWORDS = frozenset({"and", "or", "not", "in"})
 _MARKER_IDENT_RE = re.compile(r"\b([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)\b")
 
 
-def _raise_validation_error(message: str, *, path: Path | None = None) -> None:
+def _raise_validation_error(message: str, *, path: Path | None = None) -> NoReturn:
     if path is None:
         raise MetadataValidationError(message)
     raise MetadataValidationError(f"{message} (path={path})")
@@ -123,7 +124,6 @@ def _validate_pep508_dependency(
         _raise_validation_error(
             f"{loc} has an invalid package name in {dep!r}", path=path
         )
-        return  # pragma: no cover  # unreachable; satisfies type checker
 
     name = name_match.group()
     if not _NAME_RE.match(name):
