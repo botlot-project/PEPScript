@@ -12,8 +12,8 @@ uv run ruff format .             # Format code
 uv run ruff check .              # Lint code
 uv run ty check .                # Type check
 uv build                         # Build wheel and sdist
-uv run mkdocs serve              # Serve docs locally (http://127.0.0.1:8000)
-uv run mkdocs build              # Build static docs site into site/
+uv run zensical serve            # Serve docs locally (http://127.0.0.1:8000)
+uv run zensical build            # Build static docs site into site/
 ```
 
 ## Architecture

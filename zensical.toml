@@ -1,0 +1,60 @@
+[project]
+site_name = "PEPScript"
+site_description = "A typed Python library for working with PEP 723 inline script metadata."
+site_url = "https://maximiliancw.github.io/pepscript/"
+repo_url = "https://github.com/maximiliancw/pepscript"
+repo_name = "maximiliancw/pepscript"
+
+nav = [
+  {"Home" = "index.md"},
+  {"Getting Started" = "getting-started.md"},
+  {"User Guide" = "user-guide.md"},
+  {"API Reference" = "api-reference.md"},
+  {"Changelog" = "changelog.md"},
+]
+
+[project.theme]
+features = [
+  "navigation.tabs",
+  "navigation.sections",
+  "navigation.top",
+  "toc.integrate",
+  "content.code.copy",
+  "content.code.annotate",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions."pymdownx.details"]
+[project.markdown_extensions."pymdownx.superfences"]
+[project.markdown_extensions."pymdownx.highlight"]
+anchor_linenums = true
+[project.markdown_extensions."pymdownx.inlinehilite"]
+[project.markdown_extensions."pymdownx.snippets"]
+[project.markdown_extensions.toc]
+permalink = true
+
+[project.plugins.search]
+[project.plugins.mkdocstrings]
+[project.plugins.mkdocstrings.handlers.python.options]
+show_root_heading = true
+show_source = true
+show_bases = true
+inherited_members = true
+members_order = "source"
+docstring_style = "google"
+merge_init_into_class = true
+show_if_no_docstring = false
