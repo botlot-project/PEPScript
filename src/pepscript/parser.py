@@ -158,5 +158,4 @@ def parse_source(
     meta = _parse_metadata_table(parsed, path=path)
     if strict:
         validate_metadata(meta, path=path)
-        return ParseResult(meta=meta, block=block)
     return ParseResult(meta=meta, block=block)
