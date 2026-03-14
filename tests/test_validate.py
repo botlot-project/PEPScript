@@ -128,6 +128,7 @@ def test_pep508_valid(dep: str) -> None:
         "requests>=",  # operator with no version
         "requests; badvar >= '3'",  # unknown marker variable
         "requests; python_vers >= '3'",  # typo in marker variable
+        "requests[extra]garbage @ https://example.com/r.tar.gz",  # trailing garbage before @
     ],
 )
 def test_pep508_invalid(dep: str) -> None:
