@@ -83,3 +83,22 @@ def test_getattr_missing_raises_attribute_error() -> None:
     node = ToolConfig()
     with pytest.raises(AttributeError):
         _ = node.nonexistent
+
+
+def test_contains() -> None:
+    node = ToolConfig.from_dict({"a": 1, "b": 2})
+    assert "a" in node
+    assert "missing" not in node
+
+
+def test_bool_empty_is_falsy() -> None:
+    assert not ToolConfig()
+
+
+def test_bool_nonempty_is_truthy() -> None:
+    assert ToolConfig.from_dict({"a": 1})
+
+
+def test_repr() -> None:
+    node = ToolConfig.from_dict({"a": 1})
+    assert repr(node) == "ToolConfig({'a': 1})"
