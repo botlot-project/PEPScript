@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pepscript import ToolConfig, Metadata
+from pepscript import ToolConfig, ConfigRoot, Metadata
 
 
 def test_config_node_attribute_and_item_access_roundtrip() -> None:
@@ -34,3 +34,23 @@ def test_metadata_dependency_helpers_are_idempotent() -> None:
 
     assert meta.dependencies == ["httpx>=0.27"]
     assert meta.requires_python == ">=3.12"
+
+
+def test_is_empty_default() -> None:
+    assert Metadata().is_empty
+
+
+def test_is_empty_with_only_requires_python() -> None:
+    meta = Metadata(requires_python=">=3.12")
+    assert not meta.is_empty
+
+
+def test_is_empty_with_only_dependencies() -> None:
+    meta = Metadata(dependencies=["httpx"])
+    assert not meta.is_empty
+
+
+def test_is_empty_with_only_tool_config() -> None:
+    tool = ToolConfig.from_dict({"ruff": {"line-length": 120}})
+    meta = Metadata(config=ConfigRoot(tool=tool))
+    assert not meta.is_empty
