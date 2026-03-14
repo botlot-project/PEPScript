@@ -1,4 +1,4 @@
-"""Typed models for pepscript."""
+"""Typed models for PEPScript."""
 
 from __future__ import annotations
 

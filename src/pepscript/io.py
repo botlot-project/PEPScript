@@ -1,4 +1,4 @@
-"""File IO helpers for pepscript."""
+"""File IO helpers for PEPScript."""
 
 from __future__ import annotations
 

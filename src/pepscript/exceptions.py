@@ -1,27 +1,27 @@
-"""Custom exceptions for pepscript."""
+"""Custom exceptions for PEPScript."""
 
 from __future__ import annotations
 
 
-class PepScriptError(Exception):
-    """Base exception for all pepscript errors."""
+class PEPScriptError(Exception):
+    """Base exception for all PEPScript errors."""
 
 
-class FileLoadError(PepScriptError):
+class FileLoadError(PEPScriptError):
     """Raised when a script file cannot be read."""
 
 
-class DuplicateMetadataBlockError(PepScriptError):
+class DuplicateMetadataBlockError(PEPScriptError):
     """Raised when multiple PEP 723 metadata blocks are present."""
 
 
-class MetadataParseError(PepScriptError):
+class MetadataParseError(PEPScriptError):
     """Raised when metadata cannot be parsed."""
 
 
-class MetadataValidationError(PepScriptError):
+class MetadataValidationError(PEPScriptError):
     """Raised when metadata is structurally invalid."""
 
 
-class SaveError(PepScriptError):
+class SaveError(PEPScriptError):
     """Raised when a script cannot be saved."""

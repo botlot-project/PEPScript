@@ -1,4 +1,4 @@
-# pepscript
+# PEPScript
 
 A typed Python library for working with [PEP 723](https://peps.python.org/pep-0723/) inline script metadata. Parse, edit, validate, and serialize metadata blocks programmatically — without being a script runner.
 

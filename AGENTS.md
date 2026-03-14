@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**pepscript** is a Python 3.12+ library for working with PEP 723 inline script metadata. It treats PEP 723-enabled scripts as first-class typed documents.
+**PEPScript** is a Python 3.12+ library for working with PEP 723 inline script metadata. It treats PEP 723-enabled scripts as first-class typed documents.
 
 **Key Value:** Library/SDK for tools that need to work with PEP 723 metadata programmatically — *not* a script runner.
 

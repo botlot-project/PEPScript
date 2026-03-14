@@ -1,4 +1,4 @@
-"""Public API for pepscript."""
+"""Public API for PEPScript."""
 
 from .config import ConfigNode
 from .exceptions import (
@@ -6,7 +6,7 @@ from .exceptions import (
     FileLoadError,
     MetadataParseError,
     MetadataValidationError,
-    PepScriptError,
+    PEPScriptError,
     SaveError,
 )
 from .models import PEPConfigRoot, PEPMetadata, ScriptFileInfo
@@ -21,7 +21,7 @@ __all__ = [
     "PEPConfigRoot",
     "PEPMetadata",
     "PEPScript",
-    "PepScriptError",
+    "PEPScriptError",
     "SaveError",
     "ScriptFileInfo",
     "parse_file",

@@ -15,7 +15,7 @@ uv run ty check .                # Type check
 
 ## Architecture
 
-**pepscript** is a zero-dependency Python 3.12+ library for programmatically reading, editing, and serializing [PEP 723](https://peps.python.org/pep-0723/) inline script metadata. It is a library/SDK, not a script runner.
+**PEPScript** is a zero-dependency Python 3.12+ library for programmatically reading, editing, and serializing [PEP 723](https://peps.python.org/pep-0723/) inline script metadata. It is a library/SDK, not a script runner.
 
 ### Layered design
 
@@ -27,7 +27,7 @@ src/pepscript/
 ├── config.py      # ConfigNode — dynamic attribute+item access for [tool.*] sections
 ├── serialize.py   # Deterministic TOML serialization + block rewriting
 ├── validate.py    # Structural metadata validation (no PEP 508 checks in v0.1)
-├── exceptions.py  # Custom exception hierarchy rooted at PepScriptError
+├── exceptions.py  # Custom exception hierarchy rooted at PEPScriptError
 └── io.py          # File read/write, wraps OSError in custom exceptions
 ```
 
@@ -58,7 +58,7 @@ from pepscript import (
 ### Exception hierarchy
 
 ```
-PepScriptError
+PEPScriptError
 ├── FileLoadError
 ├── DuplicateMetadataBlockError
 ├── MetadataParseError
