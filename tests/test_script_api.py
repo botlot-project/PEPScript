@@ -148,6 +148,7 @@ def test_context_manager_in_memory_no_save_on_clean_exit() -> None:
         script.ensure_meta().add_dependency("rich")
 
     # no path, so no save — but edits remain in memory
+    assert script.meta is not None
     assert "rich" in script.meta.dependencies
 
 

@@ -92,7 +92,7 @@ class PEPScript:
             if self.path is not None:
                 self.save()
         else:
-            self.meta, self._block = self._snapshot  # type: ignore[misc]
+            self.meta, self._block = self._snapshot
         self._snapshot = None
         return None
 
