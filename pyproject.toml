@@ -24,6 +24,7 @@ Repository = "https://github.com/botlot-project/PEPscript"
 
 [dependency-groups]
 dev = [
+    "git-cliff>=2.12.0",
     "mkdocstrings-python>=1.16.0",
     "prek>=0.3.5",
     "pytest>=8.4.1",

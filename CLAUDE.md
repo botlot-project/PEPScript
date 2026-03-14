@@ -15,6 +15,7 @@ uv build                         # Build wheel and sdist
 uv run zensical serve            # Serve docs locally (http://127.0.0.1:8000)
 uv run zensical build            # Build static docs site into site/
 uv run prek install              # Install pre-commit hooks (run once after cloning)
+uv run git-cliff                 # Generate CHANGELOG.md from conventional commits
 ```
 
 ## Architecture
