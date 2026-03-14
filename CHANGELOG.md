@@ -13,3 +13,5 @@ Initial release.
 - Context manager API with explicit `save()` / `save_as()` persistence
 - Zero runtime dependencies (stdlib only)
 - Full type hints with `py.typed` marker
+- GitHub Actions CI (lint, format, type check, tests on Python 3.12 + 3.13)
+- Release workflow with PyPI Trusted Publishing

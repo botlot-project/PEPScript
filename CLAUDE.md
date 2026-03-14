@@ -11,6 +11,7 @@ uv run pytest -k test_name       # Run a single test by name
 uv run ruff format .             # Format code
 uv run ruff check .              # Lint code
 uv run ty check .                # Type check
+uv build                         # Build wheel and sdist
 ```
 
 ## Architecture
