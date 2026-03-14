@@ -60,7 +60,6 @@ from pepscript import (
 ```
 PepScriptError
 ├── FileLoadError
-├── MetadataBlockNotFoundError
 ├── DuplicateMetadataBlockError
 ├── MetadataParseError
 ├── MetadataValidationError

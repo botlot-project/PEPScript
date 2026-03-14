@@ -12,7 +12,7 @@
 |------------|---------|
 | **Runtime Dependencies** | None (stdlib only) |
 | **Python Version** | 3.12+ |
-| **Build Backend** | Hatchling |
+| **Build Backend** | uv_build |
 | **Package Layout** | `src/` layout |
 | **Typing** | Full type hints, ship `py.typed` |
 
