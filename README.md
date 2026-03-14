@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/pepscript)](https://pypi.org/project/pepscript/)
 [![Python](https://img.shields.io/pypi/pyversions/pepscript)](https://pypi.org/project/pepscript/)
 [![License](https://img.shields.io/pypi/l/pepscript)](https://github.com/botlot-project/PEPscript/blob/main/LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/botlot-project/PEPscript)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://botlot-project.github.io/PEPscript/)
 
 A Python library for parsing, validating, editing, and saving [PEP 723](https://peps.python.org/pep-0723/) inline script metadata through a typed API.

@@ -9,5 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+# Test / coverage artifacts
+.coverage
+
 # MkDocs build output
 site/
