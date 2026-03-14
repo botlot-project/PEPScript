@@ -26,6 +26,19 @@ class PEPScript:
     def __init__(
         self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True
     ):
+        """Load and parse a PEP 723 script from disk.
+
+        Args:
+            path: Path to the Python script file.
+            encoding: File encoding used when reading and writing. Defaults to ``"utf-8"``.
+            strict: If ``True`` (default), validate metadata immediately after parsing.
+
+        Raises:
+            FileLoadError: If the file cannot be read.
+            DuplicateMetadataBlockError: If more than one ``# /// script`` block is found.
+            MetadataParseError: If the embedded TOML is malformed.
+            MetadataValidationError: If ``strict=True`` and the metadata fails validation.
+        """
         self.path = Path(path)
         self.encoding = encoding
         self.strict = strict
@@ -51,9 +64,16 @@ class PEPScript:
         return instance
 
     def __enter__(self) -> PEPScript:
+        """Enter the context manager, returning ``self``.
+
+        Note:
+            The context manager does **not** auto-save on exit. Call ``save()``
+            explicitly before leaving the ``with`` block if you want to persist changes.
+        """
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
+        """Exit the context manager without any automatic persistence."""
         return None
 
     def _parse_current_source(self) -> None:
@@ -62,14 +82,39 @@ class PEPScript:
         self._block = parsed.block
 
     def ensure_meta(self) -> PEPMetadata:
+        """Return the existing metadata block, or create an empty one if absent.
+
+        When ``script.meta`` is ``None`` (script has no ``# /// script`` block),
+        this method creates a new ``PEPMetadata()`` and assigns it to ``script.meta``.
+        The block is not written to disk until ``save()`` is called.
+
+        Returns:
+            The existing or newly created ``PEPMetadata`` instance.
+        """
         if self.meta is None:
             self.meta = PEPMetadata()
         return self.meta
 
     def validate(self) -> None:
+        """Run structural validation against the current metadata.
+
+        This is a no-op when ``script.meta`` is ``None``. Validation is structural
+        only — PEP 508 version specifiers are accepted as plain strings without
+        further parsing.
+
+        Raises:
+            MetadataValidationError: If the metadata fails structural validation.
+        """
         validate_metadata(self.meta, path=self.path)
 
     def reload(self) -> None:
+        """Discard all in-memory edits and reload state from disk (or re-parse source).
+
+        For file-backed scripts (``self.path`` is set), the source is re-read from
+        disk, ``self.file`` is refreshed, and metadata is re-parsed.  For in-memory
+        scripts created via ``from_source``, ``self.source`` is re-parsed without
+        any I/O.
+        """
         if self.path is None:
             self._parse_current_source()
             return
@@ -83,12 +128,36 @@ class PEPScript:
         return rewrite_source(self.source, meta=self.meta, block=self._block)
 
     def save(self) -> None:
+        """Persist the current state to disk, then reload.
+
+        The metadata block is deterministically regenerated (keys sorted,
+        consistent formatting) and written back to ``self.path``.  The rest of
+        the source is preserved exactly.  After writing, ``reload()`` is called
+        so that ``self.source``, ``self.file``, and ``self.meta`` reflect the
+        saved file.
+
+        Raises:
+            SaveError: If ``self.path`` is ``None`` (in-memory script) or the
+                file cannot be written.
+        """
         if self.path is None:
             raise SaveError("Cannot save in-memory script without a file path")
         write_source(self.path, self.to_source(), encoding=self.encoding)
         self.reload()
 
     def save_as(self, path: str | Path) -> None:
+        """Write the current state to an arbitrary path, then reload from that path.
+
+        After a successful write, ``self.path`` is updated to *path* and
+        ``reload()`` is called so that ``self.source``, ``self.file``, and
+        ``self.meta`` reflect the new file location.
+
+        Args:
+            path: Destination file path (``str`` or ``Path``).
+
+        Raises:
+            SaveError: If the file cannot be written.
+        """
         target = Path(path)
         write_source(target, self.to_source(), encoding=self.encoding)
         self.path = target
