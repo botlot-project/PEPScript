@@ -1,6 +1,6 @@
 # PEPScript
 
-**PEPScript** is a Python library for programmatically reading, editing, and serializing [PEP 723](https://peps.python.org/pep-0723/) inline script metadata.
+A Python library for parsing, validating, editing, and saving [PEP 723](https://peps.python.org/pep-0723/) inline script metadata through a typed API.
 
 ## Key features
 
@@ -11,7 +11,7 @@
 | **Safe context manager**        | Auto-saves on clean exit; rolls back all in-memory edits on exception.                                                                                     |
 | **Deterministic serialization** | The `# /// script` block is fully regenerated on save — sorted keys, consistent formatting — while your source code is preserved exactly.                  |
 | **Typed API**                   | All models are `@dataclass(slots=True)` with full type hints and a `py.typed` marker.                                                                      |
-| **Dynamic tool config**         | [`ToolConfig`][pepscript.ToolConfig] supports attribute access (`node.ruff`) and item access (`node["my-tool"]`) for arbitrary `[tool.*]` sections.        |
+| **Dynamic tool config**         | [`ToolConfig`][pepscript.ToolConfig] supports attribute access (`tools.ruff`) and item access (`tools["my-tool"]`) for arbitrary `[tool.*]` sections.        |
 
 ## Quick examples
 

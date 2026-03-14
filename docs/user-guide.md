@@ -108,18 +108,18 @@ keys) and **item access** (for hyphenated or otherwise non-identifier keys):
 # [tool.my-tool]
 # enabled = true
 
-node = script.meta.config.tool
+tools = script.meta.config.tool
 
 # Attribute access
-print(node.ruff.line_length)   # 88
+print(tools.ruff.line_length)   # 88
 
 # Item access (required for hyphenated keys)
-print(node["ruff"]["line-length"])  # 88
-print(node["my-tool"]["enabled"])   # True
+print(tools["ruff"]["line-length"])  # 88
+print(tools["my-tool"]["enabled"])   # True
 ```
 
 !!! tip
-    Prefer item access (`node["ruff"]["line-length"]`) over attribute access for keys that
+    Prefer item access (`tools["ruff"]["line-length"]`) over attribute access for keys that
     contain hyphens — hyphens are not valid Python identifiers, so attribute access will
     silently convert them to underscores.
 
