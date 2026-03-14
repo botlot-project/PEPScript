@@ -44,8 +44,7 @@ class ToolConfig:
                 scalar values.
 
         Returns:
-            A new ``ToolConfig`` with all nested ``Mapping`` values converted to
-            ``ToolConfig`` instances.
+            A new ``ToolConfig`` with all nested ``Mapping`` values converted to ``ToolConfig`` instances.
         """
         return cls(_data={key: _wrap_value(value) for key, value in data.items()})
 
@@ -53,8 +52,7 @@ class ToolConfig:
         """Recursively unwrap this node to a plain ``dict``.
 
         Returns:
-            A plain ``dict`` where all nested ``ToolConfig`` values are also
-            unwrapped to ``dict``.
+            A plain ``dict`` where all nested ``ToolConfig`` values are also unwrapped to ``dict``.
         """
         return {key: _unwrap_value(value) for key, value in self._data.items()}
 

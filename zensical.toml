@@ -56,6 +56,5 @@ show_bases = true
 inherited_members = true
 members_order = "source"
 docstring_style = "google"
-docstring_section_style = "list"
 merge_init_into_class = true
 show_if_no_docstring = false
