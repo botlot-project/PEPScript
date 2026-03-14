@@ -40,3 +40,4 @@ build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=pepscript --cov-fail-under=99"
