@@ -72,3 +72,16 @@ class PEPMetadata:
                 ``None`` to remove the field from the metadata block.
         """
         self.requires_python = spec
+
+    @property
+    def is_empty(self) -> bool:
+        """Return ``True`` if this metadata object holds no meaningful content.
+
+        Used internally to decide whether to write a ``# /// script`` block
+        when the source did not originally contain one.
+        """
+        return (
+            not self.dependencies
+            and self.requires_python is None
+            and not self.config.tool.to_dict()
+        )

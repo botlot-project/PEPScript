@@ -23,7 +23,7 @@ print("keep me")
     )
 
     script = PEPScript(path)
-    assert script.meta is not None
+    assert script.has_metadata
     script.meta.add_dependency("httpx>=0.27")
     script.save()
 
@@ -34,7 +34,7 @@ print("keep me")
     assert "[tool.botlot]" in saved
 
 
-def test_ensure_meta_and_save_inserts_new_block(tmp_path: Path) -> None:
+def test_meta_edit_on_plain_script_inserts_new_block(tmp_path: Path) -> None:
     path = tmp_path / "plain.py"
     path.write_text(
         """#!/usr/bin/env python3
@@ -44,9 +44,9 @@ print("hello")
     )
 
     script = PEPScript(path)
-    meta = script.ensure_meta()
-    meta.set_requires_python(">=3.12")
-    meta.add_dependency("httpx>=0.27")
+    assert not script.has_metadata
+    script.meta.set_requires_python(">=3.12")
+    script.meta.add_dependency("httpx>=0.27")
     script.save()
 
     saved = path.read_text(encoding="utf-8")
@@ -56,13 +56,24 @@ print("hello")
     assert 'print("hello")\n' in saved
 
 
+def test_plain_script_save_does_not_inject_empty_block(tmp_path: Path) -> None:
+    path = tmp_path / "plain.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(path)
+    assert not script.has_metadata
+    script.save()  # nothing added — no block should appear
+
+    assert "# /// script" not in path.read_text(encoding="utf-8")
+
+
 def test_save_as_writes_new_file_and_updates_path(tmp_path: Path) -> None:
     src = tmp_path / "source.py"
     dst = tmp_path / "copy.py"
     src.write_text('print("hello")\n', encoding="utf-8")
 
     script = PEPScript(src)
-    script.ensure_meta().add_dependency("rich>=13.0")
+    script.meta.add_dependency("rich>=13.0")
     script.save_as(dst)
 
     assert dst.exists()
@@ -83,7 +94,7 @@ print("hello")
     )
 
     script = PEPScript(path)
-    assert script.meta is not None
+    assert script.has_metadata
     assert script.meta.dependencies == ["httpx>=0.27"]
 
     path.write_text(
@@ -96,7 +107,7 @@ print("hello")
     )
     script.reload()
 
-    assert script.meta is not None
+    assert script.has_metadata
     assert script.meta.dependencies == ["rich>=13.0"]
 
 
@@ -112,7 +123,7 @@ print("hello")
     )
 
     with PEPScript(path) as script:
-        script.ensure_meta().add_dependency("rich")
+        script.meta.add_dependency("rich")
 
     saved = path.read_text(encoding="utf-8")
     assert "rich" in saved
@@ -131,7 +142,7 @@ print("hello")
 
     with pytest.raises(RuntimeError):
         with PEPScript(path) as script:
-            script.ensure_meta().add_dependency("rich")
+            script.meta.add_dependency("rich")
             raise RuntimeError("something went wrong")
 
     # disk is untouched
@@ -145,10 +156,10 @@ def test_context_manager_in_memory_no_save_on_clean_exit() -> None:
         "# /// script\n# dependencies = []\n# ///\nprint('hi')\n"
     )
     with script:
-        script.ensure_meta().add_dependency("rich")
+        script.meta.add_dependency("rich")
 
     # no path, so no save — but edits remain in memory
-    assert script.meta is not None
+    assert script.has_metadata
     assert "rich" in script.meta.dependencies
 
 
@@ -159,7 +170,7 @@ def test_context_manager_in_memory_rolls_back_on_exception() -> None:
 
     with pytest.raises(ValueError):
         with script:
-            script.ensure_meta().add_dependency("rich")
+            script.meta.add_dependency("rich")
             raise ValueError("oops")
 
     assert "rich" not in script.meta.dependencies
@@ -173,7 +184,8 @@ def test_save_in_memory_script_raises() -> None:
 
 def test_from_source_without_metadata() -> None:
     script = PEPScript.from_source('print("hello")\n')
-    assert script.meta is None
+    assert not script.has_metadata
+    assert script.meta.is_empty
     assert script.path is None
     assert script.file is None
 
@@ -183,7 +195,7 @@ def test_to_source_without_saving(tmp_path: Path) -> None:
     path.write_text('print("hello")\n', encoding="utf-8")
 
     script = PEPScript(path)
-    script.ensure_meta().add_dependency("httpx")
+    script.meta.add_dependency("httpx")
     result = script.to_source()
 
     assert "httpx" in result
@@ -200,10 +212,17 @@ def test_validate_method_passes_for_valid_metadata(tmp_path: Path) -> None:
     script.validate()  # should not raise
 
 
+def test_validate_is_noop_for_plain_script(tmp_path: Path) -> None:
+    path = tmp_path / "plain.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+    script = PEPScript(path)
+    script.validate()  # no block, empty meta — should not raise
+
+
 def test_reload_in_memory_rereparses_source() -> None:
     source = '# /// script\n# dependencies = ["httpx"]\n# ///\n'
     script = PEPScript.from_source(source)
-    assert script.meta is not None
+    assert script.has_metadata
     script.meta.add_dependency("rich")
     assert "rich" in script.meta.dependencies
     script.reload()
@@ -218,5 +237,5 @@ def test_parse_file_convenience_function(tmp_path: Path) -> None:
         '# /// script\n# dependencies = ["httpx"]\n# ///\n', encoding="utf-8"
     )
     script = parse_file(path)
-    assert script.meta is not None
+    assert script.has_metadata
     assert script.meta.dependencies == ["httpx"]

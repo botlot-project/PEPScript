@@ -23,8 +23,7 @@ Most (read-only) use cases can use this simple pattern:
 from pepscript import PEPScript
 
 script = PEPScript("/path/to/script.py")
-meta = script.ensure_meta()
-for dep in meta.dependencies:
+for dep in script.meta.dependencies:
     print(dep)
 ```
 
@@ -36,9 +35,8 @@ Use the provided context manager to enter "edit mode" with automatic persistence
 from pepscript import PEPScript
 
 with PEPScript("script.py") as script:
-    meta = script.ensure_meta()
-    meta.add_dependency("requests>=2.31")
-    meta.set_requires_python(">=3.12")
+    script.meta.add_dependency("requests>=2.31")
+    script.meta.set_requires_python(">=3.12")
 ```
 
 That's it — PEPScript handles creating the `# /// script` block if it doesn't exist, serializing the TOML, and writing it back to disk.

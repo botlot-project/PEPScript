@@ -10,7 +10,6 @@ typed access to its metadata. See the [User Guide](user-guide.md) for usage patt
       members:
         - __init__
         - from_source
-        - ensure_meta
         - validate
         - reload
         - to_source

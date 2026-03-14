@@ -39,9 +39,8 @@ Use [`PEPScript`][pepscript.PEPScript] as a context manager to add a metadata bl
 from pepscript import PEPScript
 
 with PEPScript("hello.py") as script:
-    meta = script.ensure_meta()          # creates an empty block if absent
-    meta.add_dependency("rich>=13.0")
-    meta.set_requires_python(">=3.12")
+    script.meta.add_dependency("rich>=13.0")
+    script.meta.set_requires_python(">=3.12")
 # save() is called automatically on clean exit
 ```
 
@@ -64,7 +63,7 @@ print("Hello, world!")
 from pepscript import PEPScript
 
 with PEPScript("hello.py") as script:
-    if script.meta:
+    if script.has_metadata:
         print(script.meta.requires_python)   # ">=3.12"
         print(script.meta.dependencies)      # ["rich>=13.0"]
 ```

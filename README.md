@@ -20,7 +20,7 @@ pip install pepscript
 from pepscript import PEPScript
 
 script = PEPScript("my_script.py")
-if script.meta:
+if script.has_metadata:
     print(script.meta.dependencies)
     print(script.meta.requires_python)
 ```
@@ -31,10 +31,8 @@ if script.meta:
 from pepscript import PEPScript
 
 with PEPScript("my_script.py") as script:
-    meta = script.ensure_meta()
-    meta.add_dependency("httpx>=0.27")
-    meta.set_requires_python(">=3.12")
-    script.save()
+    script.meta.add_dependency("httpx>=0.27")
+    script.meta.set_requires_python(">=3.12")
 ```
 
 ### Parse from a string
@@ -58,7 +56,7 @@ print(script.meta.dependencies)  # ['requests>=2.0']
 from pepscript import PEPScript
 
 script = PEPScript("my_script.py")
-if script.meta:
+if script.has_metadata:
     # Attribute access
     line_length = script.meta.config.tool.ruff.line_length
     # Item access (for keys with hyphens)

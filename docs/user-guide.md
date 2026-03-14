@@ -3,14 +3,15 @@
 ## Reading metadata from a file
 
 Open a script with [`PEPScript(path)`][pepscript.PEPScript]. After construction, `script.meta` is
-either a [`PEPMetadata`][pepscript.PEPMetadata] instance (if a `# /// script` block exists) or `None`.
+always a [`PEPMetadata`][pepscript.PEPMetadata] instance. Use [`script.has_metadata`][pepscript.PEPScript.has_metadata]
+to check whether a `# /// script` block was actually present in the file.
 
 ```python
 from pepscript import PEPScript
 
 script = PEPScript("my_script.py")
 
-if script.meta:
+if script.has_metadata:
     print(script.meta.requires_python)  # e.g. ">=3.12"
     print(script.meta.dependencies)     # e.g. ["requests>=2.31"]
 ```
@@ -36,7 +37,7 @@ print(script.file.encoding)  # "utf-8"
 
 ```python
 with PEPScript("my_script.py") as script:
-    script.ensure_meta().add_dependency("rich>=13.0")
+    script.meta.add_dependency("rich>=13.0")
 # save() called automatically on clean exit
 ```
 
@@ -46,15 +47,6 @@ with PEPScript("my_script.py") as script:
 
 Only `meta` and the internal block offsets are snapshotted at context manager entry — the full
 source text is not copied — so this is efficient even for large files.
-
-### `ensure_meta`
-
-When a script has no `# /// script` block, `script.meta` is `None`. Use
-[`ensure_meta()`][pepscript.PEPScript.ensure_meta] to create an empty block:
-
-```python
-meta = script.ensure_meta()  # returns existing or creates new PEPMetadata
-```
 
 ### `save` and `save_as`
 
@@ -72,12 +64,10 @@ script.save_as("output/my_script.py")
 ## Adding and removing dependencies
 
 ```python
-meta = script.ensure_meta()
+script.meta.add_dependency("requests>=2.31")   # no-op if already present (exact match)
+script.meta.add_dependency("rich>=13.0")
 
-meta.add_dependency("requests>=2.31")   # no-op if already present (exact match)
-meta.add_dependency("rich>=13.0")
-
-meta.remove_dependency("rich>=13.0")    # no-op if not found (exact match)
+script.meta.remove_dependency("rich>=13.0")    # no-op if not found (exact match)
 ```
 
 !!! warning "Exact string matching"
@@ -177,7 +167,7 @@ except MetadataValidationError as exc:
     print(exc)
 ```
 
-[`validate()`][pepscript.PEPScript.validate] is a no-op when `script.meta` is `None`. Validation covers:
+[`validate()`][pepscript.PEPScript.validate] is a no-op when `script.has_metadata` is `False` and `meta` is empty. Validation covers:
 
 - **Structure** — correct types for all metadata fields
 - **[PEP 508](https://peps.python.org/pep-0508/)** — each dependency specifier is checked for a valid name, extras,

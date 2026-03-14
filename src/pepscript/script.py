@@ -21,9 +21,10 @@ class PEPScript:
     strict: bool
     source: str
     file: ScriptFileInfo | None
-    meta: PEPMetadata | None
+    meta: PEPMetadata
+    has_metadata: bool
     _block: BlockInfo | None
-    _snapshot: tuple[PEPMetadata | None, BlockInfo | None] | None
+    _snapshot: tuple[PEPMetadata, BlockInfo | None, bool] | None
 
     def __init__(
         self, path: str | Path, *, encoding: str = "utf-8", strict: bool = True
@@ -46,7 +47,8 @@ class PEPScript:
         self.strict = strict
         self.source = ""
         self.file = None
-        self.meta = None
+        self.meta = PEPMetadata()
+        self.has_metadata = False
         self._block = None
         self._snapshot = None
         self.reload()
@@ -61,7 +63,8 @@ class PEPScript:
         instance.strict = strict
         instance.source = source
         instance.file = None
-        instance.meta = None
+        instance.meta = PEPMetadata()
+        instance.has_metadata = False
         instance._block = None
         instance._snapshot = None
         instance._parse_current_source()
@@ -75,10 +78,11 @@ class PEPScript:
         If an exception propagates out of the ``with`` block, all in-memory
         edits are discarded by restoring the pre-enter snapshot.
 
-        Only ``meta`` and the internal block offsets are snapshotted — the full
-        source text is not copied — so this is efficient even for large files.
+        Only ``meta``, ``has_metadata``, and the internal block offsets are
+        snapshotted — the full source text is not copied — so this is efficient
+        even for large files.
         """
-        self._snapshot = (copy.deepcopy(self.meta), self._block)
+        self._snapshot = (copy.deepcopy(self.meta), self._block, self.has_metadata)
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -92,33 +96,21 @@ class PEPScript:
             if self.path is not None:
                 self.save()
         else:
-            self.meta, self._block = self._snapshot
+            self.meta, self._block, self.has_metadata = self._snapshot
         self._snapshot = None
         return None
 
     def _parse_current_source(self) -> None:
         parsed = parse_source(self.source, strict=self.strict, path=self.path)
-        self.meta = parsed.meta
+        self.has_metadata = parsed.meta is not None
+        self.meta = parsed.meta if parsed.meta is not None else PEPMetadata()
         self._block = parsed.block
-
-    def ensure_meta(self) -> PEPMetadata:
-        """Return the existing metadata block, or create an empty one if absent.
-
-        When ``script.meta`` is ``None`` (script has no ``# /// script`` block),
-        this method creates a new ``PEPMetadata()`` and assigns it to ``script.meta``.
-        The block is not written to disk until ``save()`` is called.
-
-        Returns:
-            The existing or newly created ``PEPMetadata`` instance.
-        """
-        if self.meta is None:
-            self.meta = PEPMetadata()
-        return self.meta
 
     def validate(self) -> None:
         """Run structural validation against the current metadata.
 
-        This is a no-op when ``script.meta`` is ``None``. Validates:
+        This is a no-op when the script has no metadata block and ``meta``
+        is empty. Validates:
 
         - Structural shape of the metadata (correct types for all fields)
         - Each dependency is a valid PEP 508 specifier (name, extras, version
@@ -128,6 +120,8 @@ class PEPScript:
         Raises:
             MetadataValidationError: If the metadata fails structural validation.
         """
+        if not self.has_metadata and self.meta.is_empty:
+            return
         validate_metadata(self.meta, path=self.path)
 
     def reload(self) -> None:
@@ -148,7 +142,10 @@ class PEPScript:
 
     def to_source(self) -> str:
         """Serialize current state to source text without writing to disk."""
-        return rewrite_source(self.source, meta=self.meta, block=self._block)
+        meta_to_write = (
+            self.meta if (self.has_metadata or not self.meta.is_empty) else None
+        )
+        return rewrite_source(self.source, meta=meta_to_write, block=self._block)
 
     def save(self) -> None:
         """Persist the current state to disk, then reload.

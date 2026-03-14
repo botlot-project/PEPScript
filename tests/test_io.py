@@ -20,7 +20,7 @@ def test_write_to_unwritable_path_raises_save_error(tmp_path: Path) -> None:
     src.write_text('print("hello")\n', encoding="utf-8")
 
     script = PEPScript(src)
-    script.ensure_meta().add_dependency("httpx")
+    script.meta.add_dependency("httpx")
 
     # Point to a directory that doesn't exist
     script.path = tmp_path / "nonexistent_dir" / "output.py"

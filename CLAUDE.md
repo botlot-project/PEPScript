@@ -41,7 +41,7 @@ src/pepscript/
 - **Strict by default** — `PEPScript(path)` validates on parse; disable with `strict=False`.
 - **Deterministic serialization** — The metadata block is fully regenerated on save (sorted keys, consistent formatting); non-metadata source is preserved exactly.
 - **`script.file`** is a typed `ScriptFileInfo` dataclass, not a live file handle.
-- **`script.meta`** can be `None` for scripts without a metadata block. Use `ensure_meta()` to create one.
+- **`script.meta`** is always a non-`None` `PEPMetadata`. Use `script.has_metadata` to check whether a `# /// script` block was present. Use `meta.is_empty` to check whether any data has been set.
 - **`ToolConfig`** wraps arbitrary `[tool.*]` dicts for both attribute access (`node.ruff.line_length`) and item access (`node["my-tool"]`).
 - Validation covers structure, PEP 508 dependency specifiers (name, extras, version operators, environment markers), and PEP 440 `requires-python` specifiers — all via regex, no `packaging` dependency.
 

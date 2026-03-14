@@ -162,14 +162,12 @@ def test_render_block_has_blank_separator_line() -> None:
 
 
 def test_round_trip_empty_metadata() -> None:
-    """Ensure a script with ensure_meta() but no data round-trips."""
+    """Ensure a plain script with no metadata round-trips without injecting a block."""
     script = parse_script('print("hello")\n')
-    script.ensure_meta()
     new_source = script.to_source()
     script2 = parse_script(new_source)
-    assert script2.meta is not None
-    assert script2.meta.dependencies == []
-    assert script2.meta.requires_python is None
+    assert not script2.has_metadata
+    assert script2.meta.is_empty
     assert 'print("hello")' in new_source
 
 

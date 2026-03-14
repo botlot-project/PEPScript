@@ -25,7 +25,8 @@ print("hello")
 
 def test_parse_missing_metadata_block() -> None:
     script = parse_script('print("hello")\n')
-    assert script.meta is None
+    assert not script.has_metadata
+    assert script.meta.is_empty
     assert script.file is None
 
 
