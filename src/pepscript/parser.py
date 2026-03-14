@@ -154,10 +154,10 @@ def parse_source(
         parsed = tomllib.loads(content)
     except tomllib.TOMLDecodeError as error:
         _raise_parse_error(f"Invalid metadata TOML: {error}", path=path)
-        raise  # unreachable; helps type checkers see parsed is bound
+        raise  # pragma: no cover  # unreachable; helps type checkers see parsed is bound
 
     if not isinstance(parsed, dict):
-        _raise_parse_error("Metadata TOML must parse into a table", path=path)
+        _raise_parse_error("Metadata TOML must parse into a table", path=path)  # pragma: no cover
 
     meta = _parse_metadata_table(parsed, path=path)
     if strict:

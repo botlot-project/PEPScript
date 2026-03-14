@@ -188,3 +188,34 @@ def test_to_source_without_saving(tmp_path: Path) -> None:
     assert "httpx" in result
     # Original file unchanged
     assert "httpx" not in path.read_text(encoding="utf-8")
+
+
+def test_validate_method_passes_for_valid_metadata(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = ["httpx>=0.27"]\n# ///\n', encoding="utf-8"
+    )
+    script = PEPScript(path)
+    script.validate()  # should not raise
+
+
+def test_reload_in_memory_rereparses_source() -> None:
+    source = '# /// script\n# dependencies = ["httpx"]\n# ///\n'
+    script = PEPScript.from_source(source)
+    assert script.meta is not None
+    script.meta.add_dependency("rich")
+    assert "rich" in script.meta.dependencies
+    script.reload()
+    assert "rich" not in script.meta.dependencies
+
+
+def test_parse_file_convenience_function(tmp_path: Path) -> None:
+    from pepscript import parse_file
+
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = ["httpx"]\n# ///\n', encoding="utf-8"
+    )
+    script = parse_file(path)
+    assert script.meta is not None
+    assert script.meta.dependencies == ["httpx"]

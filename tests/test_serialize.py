@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import pytest
+
 from pepscript import ConfigNode, PEPConfigRoot, PEPMetadata, parse_script
 from pepscript.models import BlockInfo
 from pepscript.serialize import (
+    _format_key,
+    _format_value,
     render_metadata_block,
     rewrite_source,
     serialize_metadata_toml,
@@ -167,3 +171,23 @@ def test_round_trip_empty_metadata() -> None:
     assert script2.meta.dependencies == []
     assert script2.meta.requires_python is None
     assert 'print("hello")' in new_source
+
+
+def test_format_key_quotes_key_with_special_characters() -> None:
+    assert _format_key("my.key") == '"my.key"'
+    assert _format_key("has space") == '"has space"'
+
+
+def test_format_key_returns_bare_key_unchanged() -> None:
+    assert _format_key("my-key") == "my-key"
+    assert _format_key("my_key") == "my_key"
+
+
+def test_format_value_none_raises_type_error() -> None:
+    with pytest.raises(TypeError, match="None is not a TOML scalar value"):
+        _format_value(None)
+
+
+def test_format_value_unsupported_type_raises_type_error() -> None:
+    with pytest.raises(TypeError, match="Unsupported TOML value type"):
+        _format_value(object())

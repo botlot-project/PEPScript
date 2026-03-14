@@ -194,3 +194,29 @@ def test_validate_metadata_rejects_invalid_requires_python() -> None:
     meta = PEPMetadata(requires_python="3.12")  # missing operator
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
+
+
+def test_validate_tool_list_values() -> None:
+    meta = PEPMetadata(
+        config=PEPConfigRoot(
+            tool=ConfigNode.from_dict({"ruff": {"select": ["E", "F"]}})
+        )
+    )
+    validate_metadata(meta)  # should not raise
+
+
+def test_validate_rejects_non_list_dependencies() -> None:
+    meta = PEPMetadata(dependencies="not-a-list")  # type: ignore[arg-type]
+    with pytest.raises(MetadataValidationError, match="'dependencies' must be a list"):
+        validate_metadata(meta)
+
+
+def test_pep508_empty_extra_in_list_is_skipped() -> None:
+    # "requests[,security]" splits into ["", "security"]; empty slot is silently skipped
+    _validate_pep508_dependency("requests[,security]")  # should not raise
+
+
+def test_pep508_invalid_extra_name_raises() -> None:
+    # "bad!extra" contains "!" which is not a valid extra name character
+    with pytest.raises(MetadataValidationError, match="invalid extra"):
+        _validate_pep508_dependency("requests[bad!extra]")

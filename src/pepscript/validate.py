@@ -123,7 +123,7 @@ def _validate_pep508_dependency(
         _raise_validation_error(
             f"{loc} has an invalid package name in {dep!r}", path=path
         )
-        return  # unreachable; satisfies type checker
+        return  # pragma: no cover  # unreachable; satisfies type checker
 
     name = name_match.group()
     if not _NAME_RE.match(name):
