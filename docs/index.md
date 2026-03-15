@@ -55,7 +55,6 @@ That's it — PEPScript handles creating the `# /// script` block if it doesn't 
 
     Auto-generated reference for every public class, function, and exception.
 
-- **[Changelog](changelog.md)**
+- **[GitHub Releases](https://github.com/botlot-project/PEPscript/releases)**
 
-    Release history and what changed in each version.
-
+    Auto-generated release notes and downloadable artifacts for each tagged version.

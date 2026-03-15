@@ -10,7 +10,6 @@ nav = [
   {"Getting Started" = "getting-started.md"},
   {"User Guide" = "user-guide.md"},
   {"API Reference" = "api-reference.md"},
-  {"Changelog" = "changelog.md"},
 ]
 
 [project.theme]
