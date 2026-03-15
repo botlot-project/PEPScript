@@ -1,6 +1,6 @@
 [project]
 name = "pepscript"
-version = "0.1.0"
+version = "0.1.1"
 description = "Typed Python library for working with PEP 723 inline script metadata"
 readme = "README.md"
 license = "MIT"
@@ -21,6 +21,8 @@ classifiers = [
 
 [project.urls]
 Repository = "https://github.com/botlot-project/PEPscript"
+Documentation = "https://botlot-project.github.io/PEPscript/"
+Issues = "https://github.com/botlot-project/PEPscript/issues"
 
 [dependency-groups]
 dev = [

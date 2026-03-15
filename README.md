@@ -102,14 +102,15 @@ uv run ty check .          # Type check
 ### Versioning and releases
 
 This project uses [Semantic Versioning](https://semver.org/). The version is set in `pyproject.toml`.
+Release notes are generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) when a version tag is pushed.
 
 To release:
 
 1. Update `version` in `pyproject.toml`
 2. Tag and push:
    ```bash
-   git tag v0.2.0
-   git push --tags
+   git tag v0.1.1
+   git push origin v0.1.1
    ```
 
 Commit messages should follow [Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `feat!:` for breaking changes).
