@@ -34,6 +34,21 @@ print("keep me")
     assert "[tool.botlot]" in saved
 
 
+def test_save_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_bytes(
+        b'# /// script\r\n# dependencies = ["httpx"]\r\n# ///\r\nprint("hello")\r\n'
+    )
+
+    script = PEPScript(path)
+    script.meta.add_dependency("rich")
+    script.save()
+
+    saved = path.read_bytes()
+    assert b"\r\n" in saved
+    assert b"\n" not in saved.replace(b"\r\n", b"")
+
+
 def test_meta_edit_on_plain_script_inserts_new_block(tmp_path: Path) -> None:
     path = tmp_path / "plain.py"
     path.write_text(

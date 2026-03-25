@@ -15,6 +15,13 @@ _BARE_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _CODING_RE = re.compile(r"^[ \t]*#.*coding[:=][ \t]*[-_.a-zA-Z0-9]+")
 
 
+def _detect_newline(source: str) -> str:
+    match = re.search(r"\r\n|\n|\r", source)
+    if match is None:
+        return "\n"
+    return match.group(0)
+
+
 def _format_key(key: str) -> str:
     if _BARE_KEY_RE.match(key):
         return key
@@ -104,17 +111,17 @@ def serialize_metadata_toml(meta: Metadata) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_metadata_block(meta: Metadata) -> str:
+def render_metadata_block(meta: Metadata, *, newline: str = "\n") -> str:
     """Render a PEP 723 block from metadata."""
 
     toml = serialize_metadata_toml(meta)
-    output: list[str] = ["# /// script\n"]
+    output: list[str] = [f"# /// script{newline}"]
     for line in toml.splitlines():
         if line:
-            output.append(f"# {line}\n")
+            output.append(f"# {line}{newline}")
         else:
-            output.append("#\n")
-    output.append("# ///\n")
+            output.append(f"#{newline}")
+    output.append(f"# ///{newline}")
     return "".join(output)
 
 
@@ -140,19 +147,21 @@ def rewrite_source(
 ) -> str:
     """Rewrite source with inserted/replaced/removed metadata block."""
 
+    newline = _detect_newline(source)
+
     if block is not None:
         if meta is None:
             return source[: block.start] + source[block.end :]
-        rendered = render_metadata_block(meta)
+        rendered = render_metadata_block(meta, newline=newline)
         return source[: block.start] + rendered + source[block.end :]
 
     if meta is None:
         return source
 
-    rendered = render_metadata_block(meta)
+    rendered = render_metadata_block(meta, newline=newline)
     insert_at = _insertion_offset(source)
     before = source[:insert_at]
     after = source[insert_at:]
 
-    spacer = "\n" if after and not after.startswith("\n") else ""
+    spacer = newline if after and not after.startswith(("\r\n", "\n", "\r")) else ""
     return before + rendered + spacer + after

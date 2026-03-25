@@ -91,6 +91,21 @@ def test_rewrite_source_insert_after_coding_declaration() -> None:
     assert "print('hello')" in result
 
 
+def test_rewrite_source_preserves_crlf_line_endings() -> None:
+    source = "# /// script\r\n# dependencies = []\r\n# ///\r\nprint('hi')\r\n"
+    block = BlockInfo(
+        start=0,
+        end=len("# /// script\r\n# dependencies = []\r\n# ///\r\n"),
+        content_start=len("# /// script\r\n"),
+        content_end=len("# /// script\r\n# dependencies = []\r\n"),
+        block_type="script",
+    )
+    meta = Metadata(dependencies=["httpx"])
+    result = rewrite_source(source, meta=meta, block=block)
+    assert "\r\n" in result
+    assert "\n" not in result.replace("\r\n", "")
+
+
 def test_rewrite_source_replace_existing_block() -> None:
     source = "# /// script\n# dependencies = []\n# ///\nprint('hi')\n"
     block = BlockInfo(
