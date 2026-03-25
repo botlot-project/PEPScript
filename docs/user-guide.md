@@ -75,6 +75,22 @@ script.meta.remove_dependency("rich>=13.0")    # no-op if not found (exact match
     Matching is **exact string comparison** — `"requests>=2.31"` and
     `"requests >= 2.31"` are treated as different entries.
 
+## Dependency mutation by package name
+
+Use name-based helpers when you want package-level matching (normalized per PEP 503 rules).
+
+```python
+# Replace first matching dependency and dedupe additional entries with same package name
+script.meta.replace_dependency_by_name("requests>=2.32")
+
+# Remove all matching dependencies by package name
+removed = script.meta.remove_dependency_by_name("urllib3")
+
+# Query by package name
+if script.meta.has_dependency("requests", match="name"):
+    current = script.meta.get_dependency_by_name("requests")
+```
+
 ## Parsing from a source string
 
 Use [`parse_script`][pepscript.parse_script] when you already have source code in memory:
@@ -177,6 +193,45 @@ except MetadataValidationError as exc:
 
 !!! note
     All checks are regex-based — no `packaging` dependency is required.
+
+## Structured diagnostics
+
+Use [`collect_diagnostics()`][pepscript.PEPScript.collect_diagnostics] to get machine-readable diagnostics
+without exceptions:
+
+```python
+for diag in script.collect_diagnostics(strict=True):
+    print(diag.code, diag.message, diag.path, diag.line, diag.column, diag.field)
+```
+
+Use [`check()`][pepscript.PEPScript.check] for a boolean validity check:
+
+```python
+if script.check(strict=True):
+    print("metadata is valid")
+```
+
+Parser and validation exceptions now include `diagnostic` / `diagnostics` payloads.
+
+## Batch scanning
+
+For tooling workflows, scan repositories with [`iter_scan_scripts`][pepscript.iter_scan_scripts]
+or [`scan_scripts`][pepscript.scan_scripts]:
+
+```python
+from pepscript import iter_scan_scripts
+
+for result in iter_scan_scripts(
+    ".",
+    include=("**/*.py",),
+    exclude=("venv/**",),
+    strict=True,
+):
+    print(result.path, result.status, result.validated)
+```
+
+`strict=True` in scan mode means parse + validation diagnostics are collected.
+`strict=False` skips validation and reports parse-only validity.
 
 ## Reloading from disk
 

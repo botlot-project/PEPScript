@@ -11,6 +11,8 @@ typed access to its metadata. See the [User Guide](user-guide.md) for usage patt
         - __init__
         - from_source
         - validate
+        - collect_diagnostics
+        - check
         - reload
         - to_source
         - save
@@ -26,6 +28,10 @@ Thin wrappers around [`PEPScript`][pepscript.PEPScript] for common one-liner usa
 
 ::: pepscript.parse_script
 
+::: pepscript.iter_scan_scripts
+
+::: pepscript.scan_scripts
+
 ## Data models
 
 Typed, slot-based dataclasses that represent parsed PEP 723 metadata.
@@ -39,6 +45,10 @@ See [Reading metadata](user-guide.md#reading-metadata-from-a-file) and
 ::: pepscript.ToolConfig
 
 ::: pepscript.ScriptFileInfo
+
+::: pepscript.Diagnostic
+
+::: pepscript.ScanResult
 
 ## Exceptions
 

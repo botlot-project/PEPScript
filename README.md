@@ -83,6 +83,35 @@ except MetadataValidationError as e:
     print(f"Invalid metadata: {e}")
 ```
 
+### Collect structured diagnostics
+
+```python
+from pepscript import PEPScript
+
+script = PEPScript("my_script.py", strict=False)
+for diagnostic in script.collect_diagnostics(strict=True):
+    print(diagnostic.code, diagnostic.message, diagnostic.line, diagnostic.column)
+```
+
+### Batch scan a repository
+
+```python
+from pepscript import iter_scan_scripts
+
+for result in iter_scan_scripts(".", include=("**/*.py",)):
+    print(result.path, result.status, len(result.diagnostics))
+```
+
+### Replace dependencies by package name
+
+```python
+from pepscript import PEPScript
+
+with PEPScript("my_script.py") as script:
+    script.meta.replace_dependency_by_name("requests>=2.32")
+    script.meta.remove_dependency_by_name("urllib3")
+```
+
 ## Contributing
 
 ### Setup
