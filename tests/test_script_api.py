@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pepscript import PEPScript, parse_script
-from pepscript.exceptions import SaveError
+from pepscript.exceptions import MetadataValidationError, SaveError
 
 
 def test_save_replaces_block_and_preserves_non_metadata_code(tmp_path: Path) -> None:
@@ -249,6 +249,51 @@ def test_constructor_strict_false_skips_validation(tmp_path: Path) -> None:
     )
     script = PEPScript(path, strict=False)
     assert script.meta.dependencies == [">>invalid"]
+
+
+def test_save_validates_before_write_and_leaves_file_untouched(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    original = '# /// script\n# dependencies = ["httpx"]\n# ///\nprint("hello")\n'
+    path.write_text(original, encoding="utf-8")
+
+    script = PEPScript(path)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save()
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_save_strict_false_still_validates_before_write(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    original = 'print("hello")\n'
+    path.write_text(original, encoding="utf-8")
+
+    script = PEPScript(path, strict=False)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save()
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_save_as_validates_before_write_and_does_not_create_target(
+    tmp_path: Path,
+) -> None:
+    src = tmp_path / "source.py"
+    dst = tmp_path / "copy.py"
+    src.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(src, strict=False)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save_as(dst)
+
+    assert not dst.exists()
+    assert script.path == src
 
 
 def test_save_failure_in_context_manager_clears_snapshot(tmp_path: Path) -> None:
