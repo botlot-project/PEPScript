@@ -65,8 +65,9 @@ from pepscript import PEPScript
 script = PEPScript("my_script.py")
 if script.has_metadata:
     # Attribute access
-    line_length = script.meta.config.tool.ruff.line_length
+    ruff = script.meta.config.tool.ruff
     # Item access (for keys with hyphens)
+    line_length = ruff["line-length"]
     setting = script.meta.config.tool["my-tool"]["some-setting"]
 ```
 
