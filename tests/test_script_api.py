@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pepscript import PEPScript, parse_script
-from pepscript.exceptions import SaveError
+from pepscript.exceptions import MetadataValidationError, SaveError
 
 
 def test_save_replaces_block_and_preserves_non_metadata_code(tmp_path: Path) -> None:
@@ -32,6 +32,21 @@ print("keep me")
     assert 'dependencies = ["requests>=2.0", "httpx>=0.27"]' in saved
     assert 'requires-python = ">=3.12"' in saved
     assert "[tool.botlot]" in saved
+
+
+def test_save_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_bytes(
+        b'# /// script\r\n# dependencies = ["httpx"]\r\n# ///\r\nprint("hello")\r\n'
+    )
+
+    script = PEPScript(path)
+    script.meta.add_dependency("rich")
+    script.save()
+
+    saved = path.read_bytes()
+    assert b"\r\n" in saved
+    assert b"\n" not in saved.replace(b"\r\n", b"")
 
 
 def test_meta_edit_on_plain_script_inserts_new_block(tmp_path: Path) -> None:
@@ -65,6 +80,33 @@ def test_plain_script_save_does_not_inject_empty_block(tmp_path: Path) -> None:
     script.save()  # nothing added — no block should appear
 
     assert "# /// script" not in path.read_text(encoding="utf-8")
+
+
+def test_plain_script_save_does_not_inject_empty_tool_tables(tmp_path: Path) -> None:
+    path = tmp_path / "plain.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(path)
+    script.meta.config.tool["ruff"] = {}
+    script.save()
+
+    assert "# /// script" not in path.read_text(encoding="utf-8")
+
+
+def test_save_removes_block_when_metadata_is_cleared(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = ["httpx"]\n# requires-python = ">=3.12"\n# ///\nprint("hello")\n',
+        encoding="utf-8",
+    )
+
+    script = PEPScript(path)
+    script.meta.dependencies.clear()
+    script.meta.requires_python = None
+    script.save()
+
+    assert not script.has_metadata
+    assert path.read_text(encoding="utf-8") == 'print("hello")\n'
 
 
 def test_save_as_writes_new_file_and_updates_path(tmp_path: Path) -> None:
@@ -249,6 +291,51 @@ def test_constructor_strict_false_skips_validation(tmp_path: Path) -> None:
     )
     script = PEPScript(path, strict=False)
     assert script.meta.dependencies == [">>invalid"]
+
+
+def test_save_validates_before_write_and_leaves_file_untouched(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    original = '# /// script\n# dependencies = ["httpx"]\n# ///\nprint("hello")\n'
+    path.write_text(original, encoding="utf-8")
+
+    script = PEPScript(path)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save()
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_save_strict_false_still_validates_before_write(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    original = 'print("hello")\n'
+    path.write_text(original, encoding="utf-8")
+
+    script = PEPScript(path, strict=False)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save()
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_save_as_validates_before_write_and_does_not_create_target(
+    tmp_path: Path,
+) -> None:
+    src = tmp_path / "source.py"
+    dst = tmp_path / "copy.py"
+    src.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(src, strict=False)
+    script.meta.dependencies = [">>invalid"]
+
+    with pytest.raises(MetadataValidationError):
+        script.save_as(dst)
+
+    assert not dst.exists()
+    assert script.path == src
 
 
 def test_save_failure_in_context_manager_clears_snapshot(tmp_path: Path) -> None:

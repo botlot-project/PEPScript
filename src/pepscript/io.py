@@ -25,7 +25,8 @@ def read_source(path: Path, *, encoding: str) -> str:
     """Read source from disk."""
 
     try:
-        return path.read_text(encoding=encoding)
+        with path.open("r", encoding=encoding, newline="") as handle:
+            return handle.read()
     except OSError as error:
         raise FileLoadError(f"Failed to read file: {path}") from error
 
@@ -34,6 +35,7 @@ def write_source(path: Path, source: str, *, encoding: str) -> None:
     """Write source to disk."""
 
     try:
-        path.write_text(source, encoding=encoding)
+        with path.open("w", encoding=encoding, newline="") as handle:
+            handle.write(source)
     except OSError as error:
         raise SaveError(f"Failed to write file: {path}") from error

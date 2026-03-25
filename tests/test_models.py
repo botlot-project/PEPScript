@@ -54,3 +54,9 @@ def test_is_empty_with_only_tool_config() -> None:
     tool = ToolConfig.from_dict({"ruff": {"line-length": 120}})
     meta = Metadata(config=ConfigRoot(tool=tool))
     assert not meta.is_empty
+
+
+def test_is_empty_with_only_empty_nested_tool_config() -> None:
+    tool = ToolConfig.from_dict({"ruff": {}})
+    meta = Metadata(config=ConfigRoot(tool=tool))
+    assert meta.is_empty

@@ -109,6 +109,17 @@ class PEPScript:
         self.meta = parsed.meta if parsed.meta is not None else Metadata()
         self._block = parsed.block
 
+    def _meta_to_write(self) -> Metadata | None:
+        if self.meta.is_empty:
+            return None
+        return self.meta
+
+    def _validated_source_for_write(self) -> str:
+        meta_to_write = self._meta_to_write()
+        if meta_to_write is not None:
+            validate_metadata(meta_to_write, path=self.path)
+        return rewrite_source(self.source, meta=meta_to_write, block=self._block)
+
     def validate(self) -> None:
         """Run structural validation against the current metadata.
 
@@ -145,10 +156,9 @@ class PEPScript:
 
     def to_source(self) -> str:
         """Serialize current state to source text without writing to disk."""
-        meta_to_write = (
-            self.meta if (self.has_metadata or not self.meta.is_empty) else None
+        return rewrite_source(
+            self.source, meta=self._meta_to_write(), block=self._block
         )
-        return rewrite_source(self.source, meta=meta_to_write, block=self._block)
 
     def save(self) -> None:
         """Persist the current state to disk, then reload.
@@ -165,7 +175,9 @@ class PEPScript:
         """
         if self.path is None:
             raise SaveError("Cannot save in-memory script without a file path")
-        write_source(self.path, self.to_source(), encoding=self.encoding)
+        write_source(
+            self.path, self._validated_source_for_write(), encoding=self.encoding
+        )
         self.reload()
 
     def save_as(self, path: str | Path) -> None:
@@ -182,7 +194,14 @@ class PEPScript:
             SaveError: If the file cannot be written.
         """
         target = Path(path)
-        write_source(target, self.to_source(), encoding=self.encoding)
+        meta_to_write = self._meta_to_write()
+        if meta_to_write is not None:
+            validate_metadata(meta_to_write, path=target)
+        write_source(
+            target,
+            rewrite_source(self.source, meta=meta_to_write, block=self._block),
+            encoding=self.encoding,
+        )
         self.path = target
         self.reload()
 

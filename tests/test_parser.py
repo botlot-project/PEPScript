@@ -81,6 +81,34 @@ dependencies = ["httpx"]
         parse_script(source)
 
 
+def test_parse_indented_start_marker_raises() -> None:
+    source = """def main():
+    # /// script
+    # dependencies = ["httpx"]
+    # ///
+"""
+    with pytest.raises(MetadataParseError, match="first column"):
+        parse_script(source)
+
+
+def test_parse_indented_end_marker_raises() -> None:
+    source = """# /// script
+# dependencies = ["httpx"]
+    # ///
+"""
+    with pytest.raises(MetadataParseError, match="first column"):
+        parse_script(source)
+
+
+def test_parse_indented_content_line_raises() -> None:
+    source = """# /// script
+    # dependencies = ["httpx"]
+# ///
+"""
+    with pytest.raises(MetadataParseError, match="column 1"):
+        parse_script(source)
+
+
 def test_parse_non_list_dependencies_raises() -> None:
     source = """# /// script
 # dependencies = "not-a-list"

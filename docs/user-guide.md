@@ -52,6 +52,7 @@ source text is not copied — so this is efficient even for large files.
 
 [`save()`][pepscript.PEPScript.save] writes to the original file path and calls
 [`reload()`][pepscript.PEPScript.reload] so the in-memory state reflects the saved file.
+Before writing, it validates the current metadata and leaves the file untouched if validation fails.
 
 [`save_as(path)`][pepscript.PEPScript.save_as] writes to an arbitrary path, updates `self.path`, and calls
 [`reload()`][pepscript.PEPScript.reload]:
@@ -111,7 +112,7 @@ keys) and **item access** (for hyphenated or otherwise non-identifier keys):
 tools = script.meta.config.tool
 
 # Attribute access
-print(tools.ruff.line_length)   # 88
+print(tools.ruff)                  # ToolConfig({"line-length": 88})
 
 # Item access (required for hyphenated keys)
 print(tools["ruff"]["line-length"])  # 88
@@ -121,7 +122,7 @@ print(tools["my-tool"]["enabled"])   # True
 !!! tip
     Prefer item access (`tools["ruff"]["line-length"]`) over attribute access for keys that
     contain hyphens — hyphens are not valid Python identifiers, so attribute access will
-    silently convert them to underscores.
+    raise `AttributeError` instead of converting them to underscores.
 
 ## Modifying tool configuration
 
@@ -202,6 +203,7 @@ Serialization guarantees:
   formatting is consistent (one space after `#`).
 - Everything **outside** the metadata block is preserved byte-for-byte.
 - If no block existed before [`save()`][pepscript.PEPScript.save], a new one is prepended.
+- If an existing block becomes empty, it is removed entirely on the next [`save()`][pepscript.PEPScript.save].
 
 ## Exception handling
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date, datetime, time, timezone
+
 import pytest
 
 from pepscript import ToolConfig, ConfigRoot, Metadata
@@ -80,6 +82,23 @@ def test_validate_accepts_valid_metadata() -> None:
     validate_metadata(meta)
 
 
+def test_validate_accepts_toml_temporal_tool_values() -> None:
+    meta = Metadata(
+        config=ConfigRoot(
+            tool=ToolConfig.from_dict(
+                {
+                    "demo": {
+                        "released": datetime(2026, 3, 25, 12, 30, tzinfo=timezone.utc),
+                        "day": date(2026, 3, 25),
+                        "clock": time(12, 30, 15),
+                    }
+                }
+            )
+        )
+    )
+    validate_metadata(meta)
+
+
 # ---------------------------------------------------------------------------
 # PEP 508 dependency specifier validation
 # ---------------------------------------------------------------------------
@@ -91,6 +110,7 @@ def test_validate_accepts_valid_metadata() -> None:
         "requests",
         "requests>=2.0",
         "requests>=2.0,<3.0",
+        "requests (>=2.0,<3.0)",
         "requests==2.31.*",
         "requests~=2.31",
         "requests!=2.0",
@@ -103,8 +123,12 @@ def test_validate_accepts_valid_metadata() -> None:
         "A",  # single-character name
         "requests>=2.0; python_version >= '3.8'",
         "requests>=2.0; python_version >= '3.8' and sys_platform == 'linux'",
+        "requests>=2.0; (python_version >= '3.8' and sys_platform == 'linux') or extra == 'test'",
         "requests; extra == 'security'",
+        "requests; 'linux' == sys_platform",
+        "requests; os_name not in 'nt'",
         "requests @ https://example.com/requests.tar.gz",
+        "requests @ file:///tmp/requests.whl",
         "requests[security] @ https://example.com/requests.tar.gz",
         # deprecated marker variables must not be rejected
         "requests; os.name == 'nt'",
@@ -123,12 +147,24 @@ def test_pep508_valid(dep: str) -> None:
         "invalid-",  # name ends with hyphen
         "-invalid",  # name starts with hyphen
         "requests[unclosed>=1.0",  # unclosed extras bracket
+        "requests[,security]",  # empty extra
+        "requests[security,]",  # trailing empty extra
         "requests[inv@lid]",  # invalid extra name
         "requests>>2.0",  # invalid version operator
         "requests>=",  # operator with no version
+        "requests(>=1.0",  # unclosed version parentheses
         "requests; badvar >= '3'",  # unknown marker variable
         "requests; python_vers >= '3'",  # typo in marker variable
+        "requests; python_version",  # missing marker operator + rhs
+        "requests; python_version >",  # missing marker rhs
+        "requests; python_version >< '3.8'",  # invalid marker operator
+        "requests; (python_version >= '3.8'",  # unclosed marker parenthesis
+        "requests; python_version >= 3.8",  # rhs must be quoted or variable
+        "requests; extra in",  # missing rhs after `in`
         "requests[extra]garbage @ https://example.com/r.tar.gz",  # trailing garbage before @
+        "requests @",  # empty direct reference
+        "requests @ not-a-url",  # missing URL scheme
+        "requests @ https://example.com/pkg.whl [oops]",  # invalid trailing whitespace/garbage
     ],
 )
 def test_pep508_invalid(dep: str) -> None:
@@ -210,11 +246,6 @@ def test_validate_rejects_non_list_dependencies() -> None:
     meta = Metadata(dependencies="not-a-list")  # type: ignore[arg-type]
     with pytest.raises(MetadataValidationError, match="'dependencies' must be a list"):
         validate_metadata(meta)
-
-
-def test_pep508_empty_extra_in_list_is_skipped() -> None:
-    # "requests[,security]" splits into ["", "security"]; empty slot is silently skipped
-    _validate_pep508_dependency("requests[,security]")  # should not raise
 
 
 def test_pep508_invalid_extra_name_raises() -> None:

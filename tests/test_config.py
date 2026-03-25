@@ -65,6 +65,13 @@ def test_setitem_wraps_dicts() -> None:
     assert isinstance(node["ruff"], ToolConfig)
 
 
+def test_hyphenated_keys_require_item_access() -> None:
+    node = ToolConfig.from_dict({"ruff": {"line-length": 88}})
+    assert node.ruff["line-length"] == 88
+    with pytest.raises(AttributeError):
+        _ = node.ruff.line_length
+
+
 def test_delitem() -> None:
     node = ToolConfig.from_dict({"a": 1, "b": 2})
     del node["a"]

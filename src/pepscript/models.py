@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .config import ToolConfig
+
+
+def _mapping_is_deep_empty(value: Mapping[str, Any]) -> bool:
+    if not value:
+        return True
+    return all(
+        isinstance(item, Mapping) and _mapping_is_deep_empty(item)
+        for item in value.values()
+    )
 
 
 @dataclass(slots=True)
@@ -83,5 +94,5 @@ class Metadata:
         return (
             not self.dependencies
             and self.requires_python is None
-            and not self.config.tool.to_dict()
+            and _mapping_is_deep_empty(self.config.tool.to_dict())
         )

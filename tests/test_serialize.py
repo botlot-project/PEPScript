@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, time, timezone
+
 import pytest
 
 from pepscript import ToolConfig, ConfigRoot, Metadata, parse_script
@@ -89,6 +91,21 @@ def test_rewrite_source_insert_after_coding_declaration() -> None:
     assert "print('hello')" in result
 
 
+def test_rewrite_source_preserves_crlf_line_endings() -> None:
+    source = "# /// script\r\n# dependencies = []\r\n# ///\r\nprint('hi')\r\n"
+    block = BlockInfo(
+        start=0,
+        end=len("# /// script\r\n# dependencies = []\r\n# ///\r\n"),
+        content_start=len("# /// script\r\n"),
+        content_end=len("# /// script\r\n# dependencies = []\r\n"),
+        block_type="script",
+    )
+    meta = Metadata(dependencies=["httpx"])
+    result = rewrite_source(source, meta=meta, block=block)
+    assert "\r\n" in result
+    assert "\n" not in result.replace("\r\n", "")
+
+
 def test_rewrite_source_replace_existing_block() -> None:
     source = "# /// script\n# dependencies = []\n# ///\nprint('hi')\n"
     block = BlockInfo(
@@ -147,6 +164,54 @@ def test_serialize_float_value() -> None:
     meta = Metadata(config=ConfigRoot(tool=tool))
     toml = serialize_metadata_toml(meta)
     assert "ratio = 1.5" in toml
+
+
+def test_serialize_tool_inline_table_value_round_trips_semantically() -> None:
+    source = """\
+# /// script
+# [tool.demo]
+# options = { a = 1, b = 2 }
+# ///
+"""
+    script = parse_script(source)
+    reparsed = parse_script(script.to_source())
+    assert (
+        reparsed.meta.config.tool.demo.to_dict()
+        == script.meta.config.tool.demo.to_dict()
+    )
+
+
+def test_serialize_tool_array_of_inline_tables_round_trips() -> None:
+    source = """\
+# /// script
+# [tool.demo]
+# targets = [{ os = "linux" }, { os = "mac" }]
+# ///
+"""
+    script = parse_script(source)
+    new_source = script.to_source()
+    reparsed = parse_script(new_source)
+    assert 'targets = [{ os = "linux" }, { os = "mac" }]' in new_source
+    assert (
+        reparsed.meta.config.tool.demo.to_dict()
+        == script.meta.config.tool.demo.to_dict()
+    )
+
+
+def test_serialize_tool_temporal_values_round_trip() -> None:
+    tool = ToolConfig.from_dict(
+        {
+            "demo": {
+                "released": datetime(2026, 3, 25, 12, 30, tzinfo=timezone.utc),
+                "day": date(2026, 3, 25),
+                "clock": time(12, 30, 15),
+            }
+        }
+    )
+    meta = Metadata(config=ConfigRoot(tool=tool))
+    block = render_metadata_block(meta)
+    reparsed = parse_script(block)
+    assert reparsed.meta.config.tool.demo.to_dict() == tool.to_dict()["demo"]
 
 
 def test_rewrite_source_no_meta_no_block_returns_source() -> None:

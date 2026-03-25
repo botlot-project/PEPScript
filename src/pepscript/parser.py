@@ -22,11 +22,18 @@ class ParseResult:
 
 
 def _is_start_marker(line: str) -> bool:
-    return line.strip() == "# /// script"
+    return line.rstrip("\r\n") == "# /// script"
 
 
 def _is_end_marker(line: str) -> bool:
-    return line.strip() == "# ///"
+    return line.rstrip("\r\n") == "# ///"
+
+
+def _is_indented_marker(line: str) -> bool:
+    return line[:1] in {" ", "\t"} and line.lstrip(" \t").rstrip("\r\n") in {
+        "# /// script",
+        "# ///",
+    }
 
 
 def _raise_parse_error(message: str, *, path: Path | None = None) -> NoReturn:
@@ -48,12 +55,20 @@ def _find_blocks(source: str, *, path: Path | None = None) -> list[BlockInfo]:
     index = 0
     while index < len(lines):
         line = lines[index]
+        if _is_indented_marker(line):
+            _raise_parse_error(
+                "Metadata markers must start at the first column", path=path
+            )
         if not _is_start_marker(line):
             index += 1
             continue
 
         end_index = index + 1
         while end_index < len(lines) and not _is_end_marker(lines[end_index]):
+            if _is_indented_marker(lines[end_index]):
+                _raise_parse_error(
+                    "Metadata markers must start at the first column", path=path
+                )
             end_index += 1
         if end_index >= len(lines):
             _raise_parse_error(
@@ -86,13 +101,12 @@ def _extract_toml_content(
                 path=path,
             )
 
-        trimmed = line.lstrip(" \t")
-        if not trimmed.startswith("#"):
+        if not line.startswith("#"):
             _raise_parse_error(
-                f"Invalid metadata content line {line_number}: expected '#'",
+                f"Invalid metadata content line {line_number}: expected '#' at column 1",
                 path=path,
             )
-        text = trimmed[1:]
+        text = line[1:]
         if text.startswith(" "):
             text = text[1:]
         content_lines.append(text)
