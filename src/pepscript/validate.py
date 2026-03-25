@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
+from urllib.parse import urlsplit
 
 from .config import ToolConfig
 from .exceptions import MetadataValidationError
@@ -43,10 +45,29 @@ _VALID_MARKER_VARS = frozenset(
     }
 )
 
-_MARKER_KEYWORDS = frozenset({"and", "or", "not", "in"})
+_MARKER_TOKEN_RE = re.compile(
+    r"""
+    \s*(
+        \(
+        |\)
+        |not\s+in\b
+        |and\b
+        |or\b
+        |~=|===|==|!=|<=|>=|<|>
+        |in\b
+        |'(?:[^'\\]|\\.)*'
+        |"(?:[^"\\]|\\.)*"
+        |[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*
+    )
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 
-# Matches simple and dotted identifiers (e.g. python_version, os.name)
-_MARKER_IDENT_RE = re.compile(r"\b([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)\b")
+
+@dataclass(slots=True)
+class _MarkerToken:
+    kind: str
+    value: str
 
 
 def _raise_validation_error(message: str, *, path: Path | None = None) -> NoReturn:
@@ -83,16 +104,134 @@ def _validate_tool_value(
 
 
 def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None:
-    """Check that all unquoted identifiers in a marker expression are valid."""
-    without_quotes = re.sub(r'"[^"]*"|\'[^\']*\'', "", marker)
-    for match in _MARKER_IDENT_RE.finditer(without_quotes):
-        ident = match.group(1)
-        if ident in _MARKER_KEYWORDS:
-            continue
-        if ident not in _VALID_MARKER_VARS:
-            _raise_validation_error(
-                f"{loc} has unknown marker variable {ident!r}", path=path
-            )
+    """Validate marker syntax and ensure only known marker variables are used."""
+
+    def tokenize(text: str) -> list[_MarkerToken]:
+        tokens: list[_MarkerToken] = []
+        index = 0
+        length = len(text)
+        while index < length:
+            if text[index].isspace():
+                index += 1
+                continue
+            match = _MARKER_TOKEN_RE.match(text, index)
+            if match is None:
+                _raise_validation_error(
+                    f"{loc} has invalid marker syntax near {text[index:]!r}",
+                    path=path,
+                )
+            value = match.group(1)
+            kind = "IDENT"
+            if value == "(":
+                kind = "LPAREN"
+            elif value == ")":
+                kind = "RPAREN"
+            elif value.lower() == "and":
+                kind = "AND"
+            elif value.lower() == "or":
+                kind = "OR"
+            elif (
+                value.lower() == "in" or re.sub(r"\s+", " ", value.lower()) == "not in"
+            ):
+                kind = "OP"
+            elif value.startswith(("'", '"')):
+                kind = "STRING"
+            elif value in {"~=", "===", "==", "!=", "<=", ">=", "<", ">"}:
+                kind = "OP"
+            tokens.append(_MarkerToken(kind=kind, value=value))
+            index = match.end()
+        return tokens
+
+    class MarkerParser:
+        def __init__(self, tokens: list[_MarkerToken]):
+            self.tokens = tokens
+            self.index = 0
+
+        def current(self) -> _MarkerToken | None:
+            if self.index >= len(self.tokens):
+                return None
+            return self.tokens[self.index]
+
+        def consume(self, kind: str) -> _MarkerToken:
+            token = self.current()
+            if token is None or token.kind != kind:
+                _raise_validation_error(
+                    f"{loc} has invalid marker syntax",
+                    path=path,
+                )
+            self.index += 1
+            return token
+
+        def parse(self) -> None:
+            self.parse_or_expression()
+            if self.current() is not None:
+                _raise_validation_error(
+                    f"{loc} has invalid marker syntax",
+                    path=path,
+                )
+
+        def parse_or_expression(self) -> None:
+            self.parse_and_expression()
+            while (token := self.current()) is not None and token.kind == "OR":
+                self.consume("OR")
+                self.parse_and_expression()
+
+        def parse_and_expression(self) -> None:
+            self.parse_term()
+            while (token := self.current()) is not None and token.kind == "AND":
+                self.consume("AND")
+                self.parse_term()
+
+        def parse_term(self) -> None:
+            token = self.current()
+            if token is None:
+                _raise_validation_error(
+                    f"{loc} has invalid marker syntax",
+                    path=path,
+                )
+            if token.kind == "LPAREN":
+                self.consume("LPAREN")
+                self.parse_or_expression()
+                self.consume("RPAREN")
+                return
+            self.parse_comparison()
+
+        def parse_comparison(self) -> None:
+            self.parse_operand()
+            self.consume("OP")
+            self.parse_operand()
+
+        def parse_operand(self) -> None:
+            token = self.current()
+            if token is None or token.kind not in {"IDENT", "STRING"}:
+                _raise_validation_error(
+                    f"{loc} has invalid marker syntax",
+                    path=path,
+                )
+            if token.kind == "IDENT" and token.value not in _VALID_MARKER_VARS:
+                _raise_validation_error(
+                    f"{loc} has unknown marker variable {token.value!r}",
+                    path=path,
+                )
+            self.index += 1
+
+    MarkerParser(tokenize(marker)).parse()
+
+
+def _validate_direct_reference(url: str, *, loc: str, path: Path | None = None) -> None:
+    if not url:
+        _raise_validation_error(f"{loc} has an empty direct reference URL", path=path)
+    if any(character.isspace() for character in url):
+        _raise_validation_error(
+            f"{loc} has invalid whitespace in direct reference URL {url!r}",
+            path=path,
+        )
+    parsed = urlsplit(url)
+    if not parsed.scheme or not (parsed.netloc or parsed.path):
+        _raise_validation_error(
+            f"{loc} has an invalid direct reference URL {url!r}",
+            path=path,
+        )
 
 
 def _validate_pep508_dependency(
@@ -115,8 +254,12 @@ def _validate_pep508_dependency(
     req_part = req_part.strip()
     is_url = "@" in req_part
 
-    # For URL requirements validate only the name/extras part before the @
-    name_scope = req_part[: req_part.index("@")].strip() if is_url else req_part
+    if is_url:
+        name_scope, url_part = req_part.split("@", 1)
+        name_scope = name_scope.strip()
+        _validate_direct_reference(url_part.strip(), loc=loc, path=path)
+    else:
+        name_scope = req_part
 
     # Extract package name (stops at [, version operator chars, whitespace, or end)
     name_match = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", name_scope)
@@ -141,7 +284,9 @@ def _validate_pep508_dependency(
         for extra in rest[1:close].split(","):
             e = extra.strip()
             if not e:
-                continue
+                _raise_validation_error(
+                    f"{loc} has an empty extra in {dep!r}", path=path
+                )
             if not _NAME_RE.match(e):
                 _raise_validation_error(f"{loc} has invalid extra {e!r}", path=path)
         rest = rest[close + 1 :].strip()
@@ -154,6 +299,13 @@ def _validate_pep508_dependency(
 
     # Version specifiers (not applicable for URL requirements)
     if not is_url and rest:
+        if rest.startswith("("):
+            if not rest.endswith(")"):
+                _raise_validation_error(
+                    f"{loc} has unclosed version specifier parentheses in {dep!r}",
+                    path=path,
+                )
+            rest = rest[1:-1].strip()
         for clause in rest.split(","):
             if not _VERSION_CLAUSE_RE.match(clause):
                 _raise_validation_error(
