@@ -5,8 +5,15 @@ from datetime import date, datetime, time, timezone
 import pytest
 
 from pepscript import ToolConfig, ConfigRoot, Metadata
+from pepscript.diagnostics import (
+    VALIDATION_DEPENDENCY_ENTRY_TYPE,
+    VALIDATION_DEPENDENCY_SPEC,
+    VALIDATION_REQUIRES_PYTHON_SPEC,
+    VALIDATION_TOOL_VALUE_TYPE,
+)
 from pepscript.exceptions import MetadataValidationError
 from pepscript.validate import (
+    collect_validation_diagnostics,
     validate_metadata,
     _validate_pep508_dependency,
     _validate_requires_python,
@@ -17,6 +24,14 @@ def test_validate_rejects_non_string_dependencies() -> None:
     meta = Metadata(dependencies=["httpx>=0.27", 123])  # type: ignore[list-item]
     with pytest.raises(MetadataValidationError):
         validate_metadata(meta)
+
+
+def test_collect_validation_diagnostics_returns_codes() -> None:
+    meta = Metadata(dependencies=[123, "requests>>2.0"])  # type: ignore[list-item]
+    diagnostics = collect_validation_diagnostics(meta)
+    codes = {diag.code for diag in diagnostics}
+    assert VALIDATION_DEPENDENCY_ENTRY_TYPE in codes
+    assert VALIDATION_DEPENDENCY_SPEC in codes
 
 
 def test_validate_rejects_non_string_requires_python() -> None:
@@ -172,6 +187,16 @@ def test_pep508_invalid(dep: str) -> None:
         _validate_pep508_dependency(dep)
 
 
+def test_pep508_marker_with_extra_tokens_raises() -> None:
+    with pytest.raises(MetadataValidationError, match="invalid marker syntax"):
+        _validate_pep508_dependency("requests; python_version >= '3.8' extra")
+
+
+def test_pep508_marker_trailing_operator_raises() -> None:
+    with pytest.raises(MetadataValidationError, match="invalid marker syntax"):
+        _validate_pep508_dependency("requests; python_version >= '3.8' and")
+
+
 def test_pep508_error_includes_index() -> None:
     with pytest.raises(MetadataValidationError, match=r"dependencies\[2\]"):
         _validate_pep508_dependency("requests>>2.0", index=2)
@@ -182,6 +207,52 @@ def test_pep508_error_includes_path() -> None:
 
     with pytest.raises(MetadataValidationError, match="path="):
         _validate_pep508_dependency("@bad", path=Path("/tmp/s.py"))
+
+
+def test_collect_validation_diagnostics_handles_plain_exceptions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import pepscript.validate as validate_module
+
+    def _raise_plain_error(*args, **kwargs) -> None:
+        raise MetadataValidationError("plain dependency failure")
+
+    monkeypatch.setattr(
+        validate_module, "_validate_pep508_dependency", _raise_plain_error
+    )
+    diagnostics = collect_validation_diagnostics(Metadata(dependencies=["httpx"]))
+    assert diagnostics
+    assert diagnostics[0].code == VALIDATION_DEPENDENCY_SPEC
+
+
+def test_collect_validation_diagnostics_handles_plain_requires_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import pepscript.validate as validate_module
+
+    def _raise_plain_error(*args, **kwargs) -> None:
+        raise MetadataValidationError("plain requires-python failure")
+
+    monkeypatch.setattr(
+        validate_module, "_validate_requires_python", _raise_plain_error
+    )
+    diagnostics = collect_validation_diagnostics(Metadata(requires_python=">=3.12"))
+    assert diagnostics
+    assert diagnostics[0].code == VALIDATION_REQUIRES_PYTHON_SPEC
+
+
+def test_collect_validation_diagnostics_handles_plain_tool_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import pepscript.validate as validate_module
+
+    def _raise_plain_error(*args, **kwargs) -> None:
+        raise MetadataValidationError("plain tool failure")
+
+    monkeypatch.setattr(validate_module, "_validate_tool_value", _raise_plain_error)
+    diagnostics = collect_validation_diagnostics(Metadata())
+    assert diagnostics
+    assert diagnostics[0].code == VALIDATION_TOOL_VALUE_TYPE
 
 
 # ---------------------------------------------------------------------------

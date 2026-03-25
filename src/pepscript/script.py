@@ -5,12 +5,13 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
+from .diagnostics import Diagnostic
 from .exceptions import SaveError
 from .io import build_file_info, read_source, write_source
 from .models import BlockInfo, Metadata, ScriptFileInfo
 from .parser import parse_source
 from .serialize import rewrite_source
-from .validate import validate_metadata
+from .validate import collect_validation_diagnostics, validate_metadata
 
 
 class PEPScript:
@@ -137,6 +138,26 @@ class PEPScript:
         if not self.has_metadata and self.meta.is_empty:
             return
         validate_metadata(self.meta, path=self.path)
+
+    def collect_diagnostics(self, *, strict: bool | None = None) -> list[Diagnostic]:
+        """Collect metadata diagnostics without raising exceptions.
+
+        Args:
+            strict: Validation mode override. Defaults to the script's configured
+                ``strict`` setting.
+        """
+
+        should_validate = self.strict if strict is None else strict
+        if not should_validate:
+            return []
+        if not self.has_metadata and self.meta.is_empty:
+            return []
+        return collect_validation_diagnostics(self.meta, path=self.path)
+
+    def check(self, *, strict: bool | None = None) -> bool:
+        """Return ``True`` when the current metadata validates cleanly."""
+
+        return not self.collect_diagnostics(strict=strict)
 
     def reload(self) -> None:
         """Discard all in-memory edits and reload state from disk (or re-parse source).
