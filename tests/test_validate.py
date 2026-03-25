@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date, datetime, time, timezone
+
 import pytest
 
 from pepscript import ToolConfig, ConfigRoot, Metadata
@@ -76,6 +78,23 @@ def test_validate_accepts_valid_metadata() -> None:
                 {"ruff": {"line-length": 120, "enabled": True, "ratio": 0.5}}
             )
         ),
+    )
+    validate_metadata(meta)
+
+
+def test_validate_accepts_toml_temporal_tool_values() -> None:
+    meta = Metadata(
+        config=ConfigRoot(
+            tool=ToolConfig.from_dict(
+                {
+                    "demo": {
+                        "released": datetime(2026, 3, 25, 12, 30, tzinfo=timezone.utc),
+                        "day": date(2026, 3, 25),
+                        "clock": time(12, 30, 15),
+                    }
+                }
+            )
+        )
     )
     validate_metadata(meta)
 

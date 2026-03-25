@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import date, datetime, time
 import json
 import re
 from typing import Any, cast
@@ -38,8 +39,20 @@ def _format_value(value: Any) -> str:
         return str(value)
     if isinstance(value, float):
         return repr(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, time):
+        return value.isoformat()
     if value is None:
         raise TypeError("None is not a TOML scalar value")
+    if isinstance(value, Mapping):
+        parts = [
+            f"{_format_key(cast(str, key))} = {_format_value(item)}"
+            for key, item in sorted(value.items())
+        ]
+        return "{ " + ", ".join(parts) + " }"
     if isinstance(value, list):
         inner = ", ".join(_format_value(item) for item in value)
         return f"[{inner}]"

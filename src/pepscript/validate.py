@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import NoReturn
 from urllib.parse import urlsplit
@@ -77,7 +78,7 @@ def _raise_validation_error(message: str, *, path: Path | None = None) -> NoRetu
 
 
 def _is_scalar(value: object) -> bool:
-    return isinstance(value, (str, int, float, bool))
+    return isinstance(value, (str, int, float, bool, date, time, datetime))
 
 
 def _validate_tool_value(
