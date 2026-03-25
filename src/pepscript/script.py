@@ -110,7 +110,7 @@ class PEPScript:
         self._block = parsed.block
 
     def _meta_to_write(self) -> Metadata | None:
-        if not self.has_metadata and self.meta.is_empty:
+        if self.meta.is_empty:
             return None
         return self.meta
 

@@ -82,6 +82,33 @@ def test_plain_script_save_does_not_inject_empty_block(tmp_path: Path) -> None:
     assert "# /// script" not in path.read_text(encoding="utf-8")
 
 
+def test_plain_script_save_does_not_inject_empty_tool_tables(tmp_path: Path) -> None:
+    path = tmp_path / "plain.py"
+    path.write_text('print("hello")\n', encoding="utf-8")
+
+    script = PEPScript(path)
+    script.meta.config.tool["ruff"] = {}
+    script.save()
+
+    assert "# /// script" not in path.read_text(encoding="utf-8")
+
+
+def test_save_removes_block_when_metadata_is_cleared(tmp_path: Path) -> None:
+    path = tmp_path / "script.py"
+    path.write_text(
+        '# /// script\n# dependencies = ["httpx"]\n# requires-python = ">=3.12"\n# ///\nprint("hello")\n',
+        encoding="utf-8",
+    )
+
+    script = PEPScript(path)
+    script.meta.dependencies.clear()
+    script.meta.requires_python = None
+    script.save()
+
+    assert not script.has_metadata
+    assert path.read_text(encoding="utf-8") == 'print("hello")\n'
+
+
 def test_save_as_writes_new_file_and_updates_path(tmp_path: Path) -> None:
     src = tmp_path / "source.py"
     dst = tmp_path / "copy.py"
