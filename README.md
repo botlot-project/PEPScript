@@ -108,11 +108,17 @@ Release notes are generated automatically from [Conventional Commits](https://ww
 To release:
 
 1. Update `version` in `pyproject.toml`
-2. Tag and push:
+2. Push your changes and merge them into `main`
+3. Wait for the `CI` workflow on `main` to pass
+4. Tag the merged commit on `main` and push the tag:
    ```bash
-   git tag v0.1.1
-   git push origin v0.1.1
+   git checkout main
+   git pull origin main
+   git tag v0.1.2
+   git push origin v0.1.2
    ```
+
+Pushing the tag triggers the release workflow, which builds the package, publishes it to PyPI, generates release notes with `git-cliff`, and creates the GitHub release.
 
 Commit messages should follow [Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `feat!:` for breaking changes).
 
