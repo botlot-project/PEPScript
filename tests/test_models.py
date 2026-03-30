@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
 from pepscript import ToolConfig, ConfigRoot, Metadata
+from pepscript.models import canonicalize_dependency_name, extract_dependency_name
 
 
 def test_config_node_attribute_and_item_access_roundtrip() -> None:
@@ -34,6 +37,75 @@ def test_metadata_dependency_helpers_are_idempotent() -> None:
 
     assert meta.dependencies == ["httpx>=0.27"]
     assert meta.requires_python == ">=3.12"
+
+
+def test_dependency_name_based_helpers() -> None:
+    meta = Metadata(dependencies=["Requests>=2.31", "rich>=13", "requests[socks]>=2.0"])
+
+    assert meta.has_dependency("requests")
+    assert meta.has_dependency("requests>=2.0", match="name")
+    assert meta.has_dependency("rich>=13", match="exact")
+    assert not meta.has_dependency("rich >= 13", match="exact")
+    assert meta.get_dependency_by_name("requests") == "Requests>=2.31"
+
+
+def test_replace_dependency_by_name_replaces_first_and_dedupes() -> None:
+    meta = Metadata(dependencies=["requests>=2.0", "rich>=13", "requests[socks]>=2.0"])
+
+    changed = meta.replace_dependency_by_name("requests>=2.32")
+
+    assert changed
+    assert meta.dependencies == ["requests>=2.32", "rich>=13"]
+
+
+def test_replace_dependency_by_name_add_if_missing_false() -> None:
+    meta = Metadata(dependencies=["httpx>=0.27"])
+
+    changed = meta.replace_dependency_by_name("rich>=13", add_if_missing=False)
+
+    assert not changed
+    assert meta.dependencies == ["httpx>=0.27"]
+
+
+def test_replace_dependency_by_name_adds_when_missing_by_default() -> None:
+    meta = Metadata(dependencies=["httpx>=0.27"])
+
+    changed = meta.replace_dependency_by_name("rich>=13")
+
+    assert changed
+    assert meta.dependencies == ["httpx>=0.27", "rich>=13"]
+
+
+def test_remove_dependency_by_name_all_or_first() -> None:
+    meta = Metadata(dependencies=["requests>=2.0", "rich>=13", "requests[socks]>=2.0"])
+
+    removed_first = meta.remove_dependency_by_name("requests", all_matches=False)
+    assert removed_first == ["requests>=2.0"]
+    assert meta.dependencies == ["rich>=13", "requests[socks]>=2.0"]
+
+    removed_rest = meta.remove_dependency_by_name("requests")
+    assert removed_rest == ["requests[socks]>=2.0"]
+    assert meta.dependencies == ["rich>=13"]
+
+
+def test_replace_dependency_by_name_rejects_invalid_dependency() -> None:
+    meta = Metadata()
+    with pytest.raises(ValueError):
+        meta.replace_dependency_by_name("@bad")
+
+
+def test_name_based_queries_handle_invalid_queries() -> None:
+    meta = Metadata(dependencies=["httpx>=0.27"])
+
+    assert not meta.has_dependency("@bad")
+    assert meta.get_dependency_by_name("@bad") is None
+    assert meta.remove_dependency_by_name("@bad") == []
+
+
+def test_name_helpers_return_none_for_empty_or_missing() -> None:
+    assert extract_dependency_name("   ") is None
+    assert canonicalize_dependency_name("My_Package.Name") == "my-package-name"
+    assert Metadata(dependencies=["httpx"]).get_dependency_by_name("rich") is None
 
 
 def test_is_empty_default() -> None:

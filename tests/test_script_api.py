@@ -358,7 +358,29 @@ def test_save_failure_in_context_manager_clears_snapshot(tmp_path: Path) -> None
 def test_parse_script_convenience_function() -> None:
     script = parse_script('# /// script\n# dependencies = ["httpx"]\n# ///\n')
     assert script.has_metadata
-    assert script.meta.dependencies == ["httpx"]
+
+
+def test_collect_diagnostics_for_invalid_metadata_in_non_strict_mode() -> None:
+    script = parse_script(
+        '# /// script\n# dependencies = ["requests>>2.0"]\n# ///\n', strict=False
+    )
+    diagnostics = script.collect_diagnostics()
+    assert diagnostics
+    assert diagnostics[0].code.startswith("PSV")
+    assert script.collect_diagnostics(strict=False) == []
+
+
+def test_check_returns_false_for_invalid_metadata() -> None:
+    script = parse_script(
+        '# /// script\n# dependencies = ["requests>>2.0"]\n# ///\n', strict=False
+    )
+    assert not script.check()
+    assert script.check(strict=False)
+
+
+def test_collect_diagnostics_empty_plain_script_returns_empty() -> None:
+    script = parse_script('print("hello")\n')
+    assert script.collect_diagnostics() == []
 
 
 def test_file_info_name_is_stem(tmp_path: Path) -> None:

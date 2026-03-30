@@ -11,6 +11,16 @@ from typing import NoReturn
 from urllib.parse import urlsplit
 
 from .config import ToolConfig
+from .diagnostics import (
+    Diagnostic,
+    VALIDATION_DEPENDENCIES_TYPE,
+    VALIDATION_DEPENDENCY_ENTRY_TYPE,
+    VALIDATION_DEPENDENCY_SPEC,
+    VALIDATION_REQUIRES_PYTHON_SPEC,
+    VALIDATION_REQUIRES_PYTHON_TYPE,
+    VALIDATION_TOOL_KEY_TYPE,
+    VALIDATION_TOOL_VALUE_TYPE,
+)
 from .exceptions import MetadataValidationError
 from .models import Metadata
 
@@ -71,10 +81,44 @@ class _MarkerToken:
     value: str
 
 
-def _raise_validation_error(message: str, *, path: Path | None = None) -> NoReturn:
-    if path is None:
-        raise MetadataValidationError(message)
-    raise MetadataValidationError(f"{message} (path={path})")
+def _build_validation_error(
+    message: str,
+    *,
+    code: str,
+    path: Path | None = None,
+    field: str | None = None,
+    line: int | None = None,
+    column: int | None = None,
+) -> MetadataValidationError:
+    diagnostic = Diagnostic(
+        code=code,
+        message=message,
+        path=path,
+        line=line,
+        column=column,
+        field=field,
+    )
+    rendered = message if path is None else f"{message} (path={path})"
+    return MetadataValidationError(rendered, diagnostic=diagnostic)
+
+
+def _raise_validation_error(
+    message: str,
+    *,
+    code: str,
+    path: Path | None = None,
+    field: str | None = None,
+    line: int | None = None,
+    column: int | None = None,
+) -> NoReturn:
+    raise _build_validation_error(
+        message,
+        code=code,
+        path=path,
+        field=field,
+        line=line,
+        column=column,
+    )
 
 
 def _is_scalar(value: object) -> bool:
@@ -90,7 +134,12 @@ def _validate_tool_value(
     if isinstance(value, Mapping):
         for key, item in value.items():
             if not isinstance(key, str):
-                _raise_validation_error(f"{location} keys must be strings", path=path)
+                _raise_validation_error(
+                    f"{location} keys must be strings",
+                    code=VALIDATION_TOOL_KEY_TYPE,
+                    path=path,
+                    field=location,
+                )
             _validate_tool_value(item, path=path, location=f"{location}.{key}")
         return
     if isinstance(value, list):
@@ -100,7 +149,10 @@ def _validate_tool_value(
     if _is_scalar(value):
         return
     _raise_validation_error(
-        f"{location} contains unsupported value type: {type(value).__name__}", path=path
+        f"{location} contains unsupported value type: {type(value).__name__}",
+        code=VALIDATION_TOOL_VALUE_TYPE,
+        path=path,
+        field=location,
     )
 
 
@@ -119,7 +171,9 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
             if match is None:
                 _raise_validation_error(
                     f"{loc} has invalid marker syntax near {text[index:]!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             value = match.group(1)
             kind = "IDENT"
@@ -158,7 +212,9 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
             if token is None or token.kind != kind:
                 _raise_validation_error(
                     f"{loc} has invalid marker syntax",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             self.index += 1
             return token
@@ -168,7 +224,9 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
             if self.current() is not None:
                 _raise_validation_error(
                     f"{loc} has invalid marker syntax",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
 
         def parse_or_expression(self) -> None:
@@ -188,7 +246,9 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
             if token is None:
                 _raise_validation_error(
                     f"{loc} has invalid marker syntax",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             if token.kind == "LPAREN":
                 self.consume("LPAREN")
@@ -207,12 +267,16 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
             if token is None or token.kind not in {"IDENT", "STRING"}:
                 _raise_validation_error(
                     f"{loc} has invalid marker syntax",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             if token.kind == "IDENT" and token.value not in _VALID_MARKER_VARS:
                 _raise_validation_error(
                     f"{loc} has unknown marker variable {token.value!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             self.index += 1
 
@@ -221,17 +285,26 @@ def _validate_marker(marker: str, *, loc: str, path: Path | None = None) -> None
 
 def _validate_direct_reference(url: str, *, loc: str, path: Path | None = None) -> None:
     if not url:
-        _raise_validation_error(f"{loc} has an empty direct reference URL", path=path)
+        _raise_validation_error(
+            f"{loc} has an empty direct reference URL",
+            code=VALIDATION_DEPENDENCY_SPEC,
+            path=path,
+            field=loc,
+        )
     if any(character.isspace() for character in url):
         _raise_validation_error(
             f"{loc} has invalid whitespace in direct reference URL {url!r}",
+            code=VALIDATION_DEPENDENCY_SPEC,
             path=path,
+            field=loc,
         )
     parsed = urlsplit(url)
     if not parsed.scheme or not (parsed.netloc or parsed.path):
         _raise_validation_error(
             f"{loc} has an invalid direct reference URL {url!r}",
+            code=VALIDATION_DEPENDENCY_SPEC,
             path=path,
+            field=loc,
         )
 
 
@@ -243,7 +316,12 @@ def _validate_pep508_dependency(
     raw = dep.strip()
 
     if not raw:
-        _raise_validation_error(f"{loc} must not be empty", path=path)
+        _raise_validation_error(
+            f"{loc} must not be empty",
+            code=VALIDATION_DEPENDENCY_SPEC,
+            path=path,
+            field=loc,
+        )
 
     # Split off environment marker at first semicolon
     if ";" in raw:
@@ -266,12 +344,20 @@ def _validate_pep508_dependency(
     name_match = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", name_scope)
     if not name_match:
         _raise_validation_error(
-            f"{loc} has an invalid package name in {dep!r}", path=path
+            f"{loc} has an invalid package name in {dep!r}",
+            code=VALIDATION_DEPENDENCY_SPEC,
+            path=path,
+            field=loc,
         )
 
     name = name_match.group()
     if not _NAME_RE.match(name):
-        _raise_validation_error(f"{loc} has invalid package name {name!r}", path=path)
+        _raise_validation_error(
+            f"{loc} has invalid package name {name!r}",
+            code=VALIDATION_DEPENDENCY_SPEC,
+            path=path,
+            field=loc,
+        )
 
     rest = name_scope[name_match.end() :].strip()
 
@@ -280,22 +366,36 @@ def _validate_pep508_dependency(
         close = rest.find("]")
         if close == -1:
             _raise_validation_error(
-                f"{loc} has unclosed extras '[' in {dep!r}", path=path
+                f"{loc} has unclosed extras '[' in {dep!r}",
+                code=VALIDATION_DEPENDENCY_SPEC,
+                path=path,
+                field=loc,
             )
         for extra in rest[1:close].split(","):
             e = extra.strip()
             if not e:
                 _raise_validation_error(
-                    f"{loc} has an empty extra in {dep!r}", path=path
+                    f"{loc} has an empty extra in {dep!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
+                    path=path,
+                    field=loc,
                 )
             if not _NAME_RE.match(e):
-                _raise_validation_error(f"{loc} has invalid extra {e!r}", path=path)
+                _raise_validation_error(
+                    f"{loc} has invalid extra {e!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
+                    path=path,
+                    field=loc,
+                )
         rest = rest[close + 1 :].strip()
 
     # For URL requirements, nothing should remain between name/extras and @
     if is_url and rest:
         _raise_validation_error(
-            f"{loc} has unexpected content before '@' in {dep!r}", path=path
+            f"{loc} has unexpected content before '@' in {dep!r}",
+            code=VALIDATION_DEPENDENCY_SPEC,
+            path=path,
+            field=loc,
         )
 
     # Version specifiers (not applicable for URL requirements)
@@ -304,14 +404,18 @@ def _validate_pep508_dependency(
             if not rest.endswith(")"):
                 _raise_validation_error(
                     f"{loc} has unclosed version specifier parentheses in {dep!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
             rest = rest[1:-1].strip()
         for clause in rest.split(","):
             if not _VERSION_CLAUSE_RE.match(clause):
                 _raise_validation_error(
                     f"{loc} has invalid version specifier {clause.strip()!r} in {dep!r}",
+                    code=VALIDATION_DEPENDENCY_SPEC,
                     path=path,
+                    field=loc,
                 )
 
 
@@ -321,33 +425,110 @@ def _validate_requires_python(spec: str, *, path: Path | None = None) -> None:
         if not _VERSION_CLAUSE_RE.match(clause):
             _raise_validation_error(
                 f"'requires-python' has invalid specifier {clause.strip()!r}",
+                code=VALIDATION_REQUIRES_PYTHON_SPEC,
                 path=path,
+                field="requires-python",
             )
 
 
-def validate_metadata(meta: Metadata | None, *, path: Path | None = None) -> None:
-    """Validate metadata structure, PEP 508 dependency specifiers, and PEP 440 version constraints."""
+def collect_validation_diagnostics(
+    meta: Metadata | None, *, path: Path | None = None
+) -> list[Diagnostic]:
+    """Collect validation diagnostics without raising."""
 
+    diagnostics: list[Diagnostic] = []
     if meta is None:
-        return
+        return diagnostics
 
     if not isinstance(meta.dependencies, list):
-        _raise_validation_error("'dependencies' must be a list", path=path)
-    for index, dep in enumerate(meta.dependencies):
-        if not isinstance(dep, str):
-            _raise_validation_error(
-                f"'dependencies[{index}]' must be a string",
+        diagnostics.append(
+            Diagnostic(
+                code=VALIDATION_DEPENDENCIES_TYPE,
+                message="'dependencies' must be a list",
                 path=path,
+                field="dependencies",
             )
-        else:
-            _validate_pep508_dependency(dep, path=path, index=index)
+        )
+    else:
+        for index, dep in enumerate(meta.dependencies):
+            if not isinstance(dep, str):
+                diagnostics.append(
+                    Diagnostic(
+                        code=VALIDATION_DEPENDENCY_ENTRY_TYPE,
+                        message=f"'dependencies[{index}]' must be a string",
+                        path=path,
+                        field=f"dependencies[{index}]",
+                    )
+                )
+                continue
+            try:
+                _validate_pep508_dependency(dep, path=path, index=index)
+            except MetadataValidationError as error:
+                if error.diagnostics:
+                    diagnostics.extend(error.diagnostics)
+                else:
+                    diagnostics.append(
+                        Diagnostic(
+                            code=VALIDATION_DEPENDENCY_SPEC,
+                            message=str(error),
+                            path=path,
+                            field=f"dependencies[{index}]",
+                        )
+                    )
 
     if meta.requires_python is not None:
         if not isinstance(meta.requires_python, str):
-            _raise_validation_error(
-                "'requires-python' must be a string or None", path=path
+            diagnostics.append(
+                Diagnostic(
+                    code=VALIDATION_REQUIRES_PYTHON_TYPE,
+                    message="'requires-python' must be a string or None",
+                    path=path,
+                    field="requires-python",
+                )
             )
         else:
-            _validate_requires_python(meta.requires_python, path=path)
+            try:
+                _validate_requires_python(meta.requires_python, path=path)
+            except MetadataValidationError as error:
+                if error.diagnostics:
+                    diagnostics.extend(error.diagnostics)
+                else:
+                    diagnostics.append(
+                        Diagnostic(
+                            code=VALIDATION_REQUIRES_PYTHON_SPEC,
+                            message=str(error),
+                            path=path,
+                            field="requires-python",
+                        )
+                    )
 
-    _validate_tool_value(meta.config.tool, path=path)
+    try:
+        _validate_tool_value(meta.config.tool, path=path)
+    except MetadataValidationError as error:
+        if error.diagnostics:
+            diagnostics.extend(error.diagnostics)
+        else:
+            diagnostics.append(
+                Diagnostic(
+                    code=VALIDATION_TOOL_VALUE_TYPE,
+                    message=str(error),
+                    path=path,
+                    field="tool",
+                )
+            )
+
+    return diagnostics
+
+
+def validate_metadata(meta: Metadata | None, *, path: Path | None = None) -> None:
+    """Validate metadata structure, PEP 508 specifiers, and PEP 440 constraints."""
+
+    diagnostics = collect_validation_diagnostics(meta, path=path)
+    if not diagnostics:
+        return
+    first = diagnostics[0]
+    raise MetadataValidationError(
+        first.message if path is None else f"{first.message} (path={path})",
+        diagnostic=first,
+        diagnostics=diagnostics,
+    )
