@@ -48,15 +48,43 @@ def _is_selected(path: str, *, include: Sequence[str], exclude: Sequence[str]) -
     return not any(_matches_glob(path, pattern) for pattern in exclude)
 
 
-def _iter_files(root_path: Path) -> Iterator[Path]:
+def _is_excluded_directory(path: str, *, exclude: Sequence[str]) -> bool:
+    if not path:
+        return False
+    directory = f"{path}/"
+    return any(
+        _matches_glob(path, pattern) or _matches_glob(directory, pattern)
+        for pattern in exclude
+    )
+
+
+def _iter_files(root_path: Path, *, exclude: Sequence[str] = ()) -> Iterator[Path]:
     if root_path.is_file():
         yield root_path
         return
     if not root_path.exists():
         raise FileLoadError(f"Failed to read file: {root_path}")
-    for path in sorted(root_path.rglob("*"), key=lambda item: item.as_posix()):
-        if path.is_file():
-            yield path
+
+    def walk(path: Path) -> Iterator[Path]:
+        try:
+            entries = sorted(path.iterdir(), key=lambda item: item.as_posix())
+        except OSError as error:
+            raise FileLoadError(f"Failed to read file: {path}") from error
+
+        for entry in entries:
+            relative = entry.relative_to(root_path).as_posix()
+            try:
+                if entry.is_dir():
+                    if _is_excluded_directory(relative, exclude=exclude):
+                        continue
+                    yield from walk(entry)
+                    continue
+                if entry.is_file():
+                    yield entry
+            except OSError as error:
+                raise FileLoadError(f"Failed to read file: {entry}") from error
+
+    yield from walk(root_path)
 
 
 def _make_invalid_result(
@@ -92,7 +120,7 @@ def iter_scan_scripts(
     """Iterate over discovered files and classify metadata status."""
 
     root_path = Path(root)
-    for path in _iter_files(root_path):
+    for path in _iter_files(root_path, exclude=exclude):
         relative = (
             path.name if root_path.is_file() else path.relative_to(root_path).as_posix()
         )
@@ -101,7 +129,15 @@ def iter_scan_scripts(
 
         try:
             source = read_source(path, encoding=encoding)
-        except FileLoadError as error:
+        except (FileLoadError, UnicodeDecodeError) as error:
+            if isinstance(error, UnicodeDecodeError):
+                message = f"Failed to read file: {path} ({encoding} decode error)"
+                diagnostic = Diagnostic(
+                    code=SCAN_FILE_READ,
+                    message=message,
+                    path=path,
+                )
+                error = FileLoadError(message, diagnostic=diagnostic)
             diagnostic = error.diagnostic
             if diagnostic is None:
                 diagnostic = Diagnostic(

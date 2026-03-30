@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 
 from pepscript import iter_scan_scripts, scan_scripts
+from pepscript.diagnostics import SCAN_FILE_READ
 from pepscript.exceptions import FileLoadError, MetadataValidationError
 
 
@@ -129,3 +131,38 @@ def test_scan_reports_file_read_failures(
     assert results[0].status == "invalid"
     assert results[0].diagnostics
     assert results[0].diagnostics[0].code == "PSS001"
+
+
+def test_scan_reports_decode_failures_as_invalid_results(tmp_path: Path) -> None:
+    path = tmp_path / "broken.py"
+    path.write_bytes(b"\xff\xfe\x00")
+
+    results = scan_scripts(tmp_path)
+
+    assert len(results) == 1
+    assert results[0].status == "invalid"
+    assert isinstance(results[0].error, FileLoadError)
+    assert results[0].diagnostics
+    assert results[0].diagnostics[0].code == SCAN_FILE_READ
+
+
+def test_scan_prunes_excluded_directories_before_descending(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / "keep.py").write_text('print("keep")\n', "utf-8")
+    excluded_dir = tmp_path / ".venv"
+    excluded_dir.mkdir()
+    (excluded_dir / "skip.py").write_text('print("skip")\n', "utf-8")
+
+    original_scandir = os.scandir
+
+    def _guarded_scandir(path: str | bytes | os.PathLike[str] | os.PathLike[bytes]):
+        if Path(path) == excluded_dir:
+            raise AssertionError("excluded directory was traversed")
+        return original_scandir(path)
+
+    monkeypatch.setattr(os, "scandir", _guarded_scandir)
+
+    results = scan_scripts(tmp_path, exclude=(".venv/**",))
+
+    assert [item.path.name for item in results] == ["keep.py"]
