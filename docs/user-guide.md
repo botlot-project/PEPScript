@@ -200,14 +200,17 @@ Use [`collect_diagnostics()`][pepscript.PEPScript.collect_diagnostics] to get ma
 without exceptions:
 
 ```python
-for diag in script.collect_diagnostics(strict=True):
+for diag in script.collect_diagnostics():
     print(diag.code, diag.message, diag.path, diag.line, diag.column, diag.field)
 ```
+
+`collect_diagnostics()` validates by default, even if the script was loaded with
+`strict=False`. Pass `strict=False` to skip validation explicitly.
 
 Use [`check()`][pepscript.PEPScript.check] for a boolean validity check:
 
 ```python
-if script.check(strict=True):
+if script.check():
     print("metadata is valid")
 ```
 
@@ -232,6 +235,8 @@ for result in iter_scan_scripts(
 
 `strict=True` in scan mode means parse + validation diagnostics are collected.
 `strict=False` skips validation and reports parse-only validity.
+Unreadable or undecodable files are reported as `invalid` results, and excluded
+directories are skipped before traversal.
 
 ## Reloading from disk
 
