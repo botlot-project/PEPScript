@@ -364,16 +364,17 @@ def test_collect_diagnostics_for_invalid_metadata_in_non_strict_mode() -> None:
     script = parse_script(
         '# /// script\n# dependencies = ["requests>>2.0"]\n# ///\n', strict=False
     )
-    diagnostics = script.collect_diagnostics(strict=True)
+    diagnostics = script.collect_diagnostics()
     assert diagnostics
     assert diagnostics[0].code.startswith("PSV")
+    assert script.collect_diagnostics(strict=False) == []
 
 
 def test_check_returns_false_for_invalid_metadata() -> None:
     script = parse_script(
         '# /// script\n# dependencies = ["requests>>2.0"]\n# ///\n', strict=False
     )
-    assert not script.check(strict=True)
+    assert not script.check()
     assert script.check(strict=False)
 
 

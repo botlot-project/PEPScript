@@ -143,11 +143,11 @@ class PEPScript:
         """Collect metadata diagnostics without raising exceptions.
 
         Args:
-            strict: Validation mode override. Defaults to the script's configured
-                ``strict`` setting.
+            strict: Validation mode override. Defaults to validating metadata, even
+                when the script was parsed with ``strict=False``.
         """
 
-        should_validate = self.strict if strict is None else strict
+        should_validate = True if strict is None else strict
         if not should_validate:
             return []
         if not self.has_metadata and self.meta.is_empty:
